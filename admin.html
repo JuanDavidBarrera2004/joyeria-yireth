@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Panel | Joyería Yireth</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/estilos.css">
+<style>
+  body{background:#f4f0e9}
+  .login{min-height:100vh;display:grid;place-items:center;padding:20px}
+  .login form{width:min(380px,100%);background:#fff;border:1px solid var(--linea);padding:40px;display:grid;gap:16px;text-align:center}
+  .panel{display:none;padding-bottom:80px}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:20px 0;border-bottom:1px solid var(--linea);margin-bottom:24px}
+  .tabs{display:flex;gap:6px}
+  .tab{padding:10px 18px;border:1px solid var(--linea);background:#fff;font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+  .tab.activo{background:var(--tinta);color:#fff;border-color:var(--tinta)}
+  .barra{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .barra input,.barra select{padding:10px 12px;border:1px solid var(--linea);background:#fff}
+  .lista{display:grid;gap:8px}
+  .fila{display:grid;grid-template-columns:64px 1fr auto auto;gap:16px;align-items:center;background:#fff;border:1px solid var(--linea);padding:10px 14px}
+  .fila.oculto{opacity:.5}
+  .fila .mini{width:64px;height:64px;background:var(--marfil) center/cover;border:1px solid var(--linea);display:grid;place-items:center}
+  .fila .mini svg{width:30px;color:var(--oro)}
+  .fila small{display:block;color:var(--gris)}
+  .pill{font-size:11.5px;padding:4px 10px;background:var(--crema);white-space:nowrap}
+  .pill.pagado{background:#dff3e4;color:#1d6b35}.pill.pendiente{background:#fff3d6;color:#8a6a2f}.pill.rechazado,.pill.cancelado{background:#f8e1dd;color:#a3392b}.pill.enviado,.pill.entregado{background:#e3ecf8;color:#2d4f80}
+  .acc{display:flex;gap:6px}.acc button{padding:8px 12px;border:1px solid var(--linea);background:#fff;font-size:13px}
+  @media(max-width:640px){.fila{grid-template-columns:56px 1fr}.fila .pill{display:none}.acc{grid-column:1/-1}}
+  dialog{margin:auto;width:min(720px,100% - 20px);max-height:94vh;border:0;padding:0;background:var(--marfil)}
+  dialog::backdrop{background:#000a}
+  dialog form{padding:28px;display:grid;gap:14px}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  @media(max-width:560px){.g2,.g3{grid-template-columns:1fr}}
+  .fotos{display:flex;gap:8px;flex-wrap:wrap}
+  .foto{width:88px;height:88px;background:#fff center/cover;border:1px solid var(--linea);position:relative}
+  .foto button{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;background:#000a;color:#fff;font-size:13px}
+  .foto .pri{position:absolute;left:2px;bottom:2px;font-size:10px;background:var(--tinta);color:#fff;padding:1px 5px}
+  .subir{width:88px;height:88px;border:1px dashed var(--tenue);display:grid;place-items:center;text-align:center;font-size:12px;color:var(--gris);cursor:pointer;background:#fff}
+  .checks{display:flex;gap:20px;flex-wrap:wrap;font-size:14px}.checks label{display:flex;gap:8px;align-items:center}
+  .pie-dlg{display:flex;justify-content:flex-end;gap:10px}
+  .caja{background:#fff;border:1px solid var(--linea);padding:24px;display:grid;gap:14px;max-width:720px}
+  .diap{display:grid;grid-template-columns:260px 1fr;gap:20px;background:#fff;border:1px solid var(--linea);padding:16px;margin-bottom:12px}
+  .diap.off{opacity:.55}
+  .prev{position:relative;aspect-ratio:16/9;background:var(--cafe2) center/cover;display:flex;align-items:center;padding:12px;color:#fff;font:500 18px/1.1 var(--f-tit);overflow:hidden}
+  .prev::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#1c0d0bb0,transparent 70%)}
+  .prev[style*="contain"]::after{display:none}
+  .prev span{position:relative;z-index:1}.prev em{display:block;color:var(--oro2)}
+  .prev .mov{position:absolute;right:6px;bottom:6px;z-index:1;font:500 10px var(--f-txt);background:#000a;padding:2px 6px}
+  .diap .botones{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .diap .botones button,.diap .botones label{padding:7px 10px;border:1px solid var(--linea);background:#fff;font-size:12.5px;cursor:pointer}
+  @media(max-width:700px){.diap{grid-template-columns:1fr}}
+  .det{background:#fff;border:1px solid var(--linea);padding:20px;margin-top:-4px;font-size:14px;display:none}
+  .det.ver{display:block}
+  .det table{width:100%;border-collapse:collapse;margin:10px 0}.det td{padding:6px 0;border-bottom:1px solid var(--linea)}
+</style>
+</head>
+<body>
+<section class="login" id="login">
+  <form id="fLogin">
+    <a class="logo" href="/" style="justify-content:center"><img src="/img/emblema-160.png" alt="" style="height:56px"><span class="txt"><b>YIRETH</b><small>JOYERÍA</small></span></a>
+    <h1 style="font-size:28px">Panel de administración</h1>
+    <label class="campo" style="text-align:left">Contraseña<input type="password" id="clave" autocomplete="current-password" required></label>
+    <p class="error" id="eLogin"></p>
+    <button class="btn btn-negro">Entrar</button>
+  </form>
+</section>
+
+<section class="panel contenedor" id="panel">
+  <div class="top">
+    <a class="logo" href="/" target="_blank" style="align-items:flex-start"><b style="font-size:24px;padding:0">YIRETH</b><small style="padding:0">PANEL</small></a>
+    <div class="tabs"><button class="tab activo" data-tab="productos">Productos</button><button class="tab" data-tab="portada">Portada</button><button class="tab" data-tab="pedidos">Pedidos</button><button class="tab" data-tab="ajustes">Ajustes</button></div>
+    <button class="btn btn-borde" id="salir" style="padding:10px 18px">Salir</button>
+  </div>
+
+  <div data-vista="productos">
+    <div class="barra">
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="filtro" type="search" placeholder="Buscar…"><select id="fCat"><option value="">Todas las categorías</option></select></div>
+      <button class="btn btn-negro" id="nuevo" style="padding:12px 20px">+ Nuevo producto</button>
+    </div>
+    <p id="resumen" style="color:var(--gris);font-size:13px;margin-bottom:10px"></p>
+    <div class="lista" id="lista"></div>
+  </div>
+
+  <div data-vista="portada" hidden>
+    <div class="barra">
+      <p style="color:var(--gris);font-size:14px;max-width:620px">Las diapositivas activas se muestran en el carrusel del inicio y cambian cada 6 segundos. Medidas: <b>1920 × 750 px</b> para computador y, si quieres, <b>1080 × 1350 px</b> para celular. Usa siempre la misma medida en todas las diapositivas. Si no hay ninguna activa, se muestra la portada de siempre.</p>
+      <div style="display:flex;gap:8px"><button class="btn btn-borde" id="nuevaDiap" style="padding:12px 18px">+ Nueva diapositiva</button><button class="btn btn-negro" id="guardarPortada" style="padding:12px 18px">Guardar portada</button></div>
+    </div>
+    <p class="error" id="ePortada"></p>
+    <div id="diaps"></div>
+    <input type="file" id="archivoDiap" accept="image/jpeg,image/png,image/webp" hidden>
+  </div>
+
+  <div data-vista="pedidos" hidden>
+    <div class="barra"><select id="fEstado"><option value="">Todos los pedidos</option><option>pendiente</option><option>pagado</option><option>enviado</option><option>entregado</option><option>rechazado</option><option>cancelado</option></select><button class="btn btn-borde" id="recargar" style="padding:10px 18px">Actualizar</button></div>
+    <div class="lista" id="pedidos"></div>
+  </div>
+
+  <div data-vista="ajustes" hidden>
+    <form class="caja" id="fAjustes">
+      <h2 style="font-size:28px">Ajustes de la tienda</h2>
+      <label class="campo">Mensaje de la barra superior<input name="anuncio" maxlength="160"></label>
+      <div class="g2">
+        <label class="campo">WhatsApp (con 57, sin +)<input name="whatsapp" inputmode="numeric"></label>
+        <label class="campo">Horario<input name="horario" maxlength="80"></label>
+      </div>
+      <label class="campo">Dirección de la tienda<input name="direccion" maxlength="120"></label>
+      <div class="g2">
+        <label class="campo">Costo del envío ($)<input name="envio" type="number" min="0" step="1000"></label>
+        <label class="campo">Envío gratis desde ($, 0 = nunca)<input name="envioGratisDesde" type="number" min="0" step="10000"></label>
+      </div>
+      <p class="error" id="eAjustes"></p>
+      <button class="btn btn-negro">Guardar ajustes</button>
+    </form>
+  </div>
+</section>
+
+<dialog id="dlg">
+  <form id="fProd">
+    <h2 id="dTit" style="font-size:28px">Nuevo producto</h2>
+    <label class="campo">Nombre<input id="pNombre" required maxlength="120" placeholder="Ej: Cadena Cartier 50 cm"></label>
+    <div class="g2">
+      <label class="campo">Categoría<select id="pCat"></select></label>
+      <label class="campo">Material<select id="pMat"></select></label>
+    </div>
+    <div class="g3">
+      <label class="campo">Precio ($)<input id="pPrecio" type="number" min="0" step="1000" required></label>
+      <label class="campo">Precio antes ($, oferta)<input id="pAntes" type="number" min="0" step="1000" placeholder="Opcional"></label>
+      <label class="campo">Unidades (vacío = sin límite)<input id="pStock" type="number" min="0" placeholder="Sin límite"></label>
+    </div>
+    <div class="g3">
+      <label class="campo">Peso<input id="pPeso" maxlength="30" placeholder="Ej: 3.2 g"></label>
+      <label class="campo">Medida<input id="pMedida" maxlength="40" placeholder="Ej: 50 cm"></label>
+      <label class="campo">Orden (1 = primero)<input id="pOrden" type="number" min="1" value="100"></label>
+    </div>
+    <label class="campo">Descripción<textarea id="pDesc" rows="3" maxlength="1500" placeholder="Detalles, tipo de tejido, si se puede marcar, etc."></textarea></label>
+    <div class="campo">Fotos (la primera es la principal; hasta 8)
+      <div class="fotos" id="pFotos"></div>
+      <input type="file" id="pArchivo" accept="image/jpeg,image/png,image/webp" multiple hidden>
+    </div>
+    <div class="checks">
+      <label><input type="checkbox" id="pActivo" checked> Visible en la tienda</label>
+      <label><input type="checkbox" id="pNuevo"> Joya nueva</label>
+      <label><input type="checkbox" id="pDest"> En tendencia (inicio)</label>
+    </div>
+    <p class="error" id="eProd"></p>
+    <div class="pie-dlg"><button type="button" class="btn btn-borde" id="cancelar">Cancelar</button><button class="btn btn-negro" id="guardar">Guardar</button></div>
+  </form>
+</dialog>
+
+<script type="module">
+import { CATEGORIAS, MATERIALES } from "/lib/datos.js";
+import { arte, pesos, esc } from "/tienda.js";
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+let clave = sessionStorage.getItem("yj-clave") || "", lista = [], pedidos = [], edit = null, fotos = [];
+
+async function api(accion, extra = {}) {
+  const r = await fetch("/api/admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ clave, accion, ...extra }) });
+  if (!(r.headers.get("content-type") || "").includes("json")) throw new Error("El panel funciona cuando la tienda está publicada.");
+  const d = await r.json(); if (!r.ok) throw new Error(d.error || "Error"); return d;
+}
+async function entrar() {
+  lista = await api("listar"); sessionStorage.setItem("yj-clave", clave);
+  $("#login").style.display = "none"; $("#panel").style.display = "block"; pintar();
+}
+$("#fLogin").onsubmit = async e => { e.preventDefault(); clave = $("#clave").value; $("#eLogin").textContent = ""; try { await entrar(); } catch (err) { $("#eLogin").textContent = err.message; } };
+$("#salir").onclick = () => { sessionStorage.removeItem("yj-clave"); location.reload(); };
+if (clave) entrar().catch(() => sessionStorage.removeItem("yj-clave"));
+
+$$(".tab").forEach(t => t.onclick = () => {
+  $$(".tab").forEach(x => x.classList.toggle("activo", x === t));
+  $$("[data-vista]").forEach(v => v.hidden = v.dataset.vista !== t.dataset.tab);
+  if (t.dataset.tab === "pedidos") cargarPedidos();
+  if (t.dataset.tab === "ajustes") cargarAjustes();
+  if (t.dataset.tab === "portada") cargarPortada();
+});
+
+/* ---------- productos ---------- */
+$("#fCat").innerHTML += CATEGORIAS.map(c => `<option>${c}</option>`).join("");
+$("#pCat").innerHTML = CATEGORIAS.map(c => `<option>${c}</option>`).join("");
+$("#pMat").innerHTML = MATERIALES.map(c => `<option>${c}</option>`).join("");
+const mini = p => p.imagenes?.[0] ? `<span class="mini" style="background-image:url('${esc(p.imagenes[0])}')"></span>` : `<span class="mini">${arte(p.categoria)}</span>`;
+function pintar() {
+  const q = $("#filtro").value.toLowerCase(), c = $("#fCat").value;
+  const v = [...lista].sort((a, b) => a.orden - b.orden).filter(p => (!c || p.categoria === c) && (!q || p.nombre.toLowerCase().includes(q)));
+  $("#resumen").textContent = `${lista.length} productos · ${lista.filter(p => p.activo !== false).length} visibles`;
+  $("#lista").innerHTML = v.map(p => `<div class="fila${p.activo === false ? " oculto" : ""}">${mini(p)}
+    <div><b style="font-weight:500">${esc(p.nombre)}</b><small>${pesos(p.precio)}${p.precioAntes ? ` (antes ${pesos(p.precioAntes)})` : ""} · ${esc(p.material)}${p.stock !== null && p.stock !== undefined ? ` · ${p.stock} und.` : ""}</small></div>
+    <span class="pill">${esc(p.categoria)}${p.nuevo ? " · nueva" : ""}${p.destacado ? " · tendencia" : ""}${p.stock === 0 ? " · agotado" : ""}${p.activo === false ? " · oculto" : ""}</span>
+    <div class="acc"><button data-ed="${esc(p.id)}">Editar</button><button data-del="${esc(p.id)}">Eliminar</button></div></div>`).join("") || `<p class="vacio">Aún no hay productos. Pulsa “+ Nuevo producto”.</p>`;
+}
+$("#filtro").oninput = $("#fCat").onchange = pintar;
+function pintarFotos() {
+  $("#pFotos").innerHTML = fotos.map((u, i) => `<div class="foto" style="background-image:url('${esc(u)}')">${i ? "" : `<span class="pri">Principal</span>`}<button type="button" data-q="${i}" aria-label="Quitar foto">×</button></div>`).join("") +
+    (fotos.length < 8 ? `<label class="subir" for="pArchivo">+ Agregar<br>fotos</label>` : "");
+}
+$("#pFotos").onclick = e => { const b = e.target.closest("[data-q]"); if (b) { fotos.splice(+b.dataset.q, 1); pintarFotos(); } };
+function abrir(p) {
+  edit = p || null; $("#dTit").textContent = p ? "Editar producto" : "Nuevo producto";
+  $("#pNombre").value = p?.nombre || ""; $("#pCat").value = p?.categoria || "Cadenas"; $("#pMat").value = p?.material || "Oro 18K";
+  $("#pPrecio").value = p?.precio || ""; $("#pAntes").value = p?.precioAntes || ""; $("#pStock").value = p?.stock ?? "";
+  $("#pPeso").value = p?.peso || ""; $("#pMedida").value = p?.medida || ""; $("#pOrden").value = p?.orden || 100; $("#pDesc").value = p?.descripcion || "";
+  $("#pActivo").checked = p ? p.activo !== false : true; $("#pNuevo").checked = p ? !!p.nuevo : true; $("#pDest").checked = !!p?.destacado;
+  fotos = [...(p?.imagenes || [])]; pintarFotos(); $("#eProd").textContent = ""; $("#dlg").showModal();
+}
+$("#nuevo").onclick = () => abrir(); $("#cancelar").onclick = () => $("#dlg").close();
+$("#lista").onclick = async e => {
+  const ed = e.target.closest("[data-ed]"), del = e.target.closest("[data-del]");
+  if (ed) abrir(lista.find(p => p.id === ed.dataset.ed));
+  if (del) { const p = lista.find(x => x.id === del.dataset.del); if (!confirm(`¿Eliminar "${p.nombre}"?`)) return;
+    try { await api("eliminar", { id: p.id }); lista = lista.filter(x => x !== p); pintar(); } catch (err) { alert(err.message); } }
+};
+function reducir(f, max = 1400) {
+  return new Promise((ok, mal) => { const img = new Image(); img.onerror = () => mal(new Error("No se pudo leer " + f.name));
+    img.onload = () => { const s = Math.min(1, max / Math.max(img.width, img.height)); const c = document.createElement("canvas");
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src); ok(c.toDataURL("image/jpeg", .86).split(",")[1]); };
+    img.src = URL.createObjectURL(f); });
+}
+$("#pArchivo").onchange = async () => {
+  const files = [...$("#pArchivo").files].slice(0, 8 - fotos.length); $("#pArchivo").value = "";
+  for (const f of files) { $("#eProd").textContent = `Subiendo ${f.name}…`;
+    try { const b64 = await reducir(f); const d = await api("foto", { tipo: "image/jpeg", base64: b64 }); fotos.push(d.url); pintarFotos(); }
+    catch (err) { $("#eProd").textContent = err.message; return; } }
+  $("#eProd").textContent = "";
+};
+const crearId = n => n.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) + "-" + Math.random().toString(36).slice(2, 5);
+$("#fProd").onsubmit = async e => {
+  e.preventDefault();
+  const producto = { id: edit?.id || crearId($("#pNombre").value), nombre: $("#pNombre").value.trim(), categoria: $("#pCat").value, material: $("#pMat").value,
+    precio: +$("#pPrecio").value, precioAntes: +$("#pAntes").value || 0, stock: $("#pStock").value === "" ? null : +$("#pStock").value,
+    peso: $("#pPeso").value.trim(), medida: $("#pMedida").value.trim(), orden: +$("#pOrden").value || 100, descripcion: $("#pDesc").value.trim(),
+    imagenes: fotos, activo: $("#pActivo").checked, nuevo: $("#pNuevo").checked, destacado: $("#pDest").checked };
+  if (!producto.nombre || !producto.precio) return $("#eProd").textContent = "Escribe el nombre y el precio.";
+  $("#guardar").disabled = true;
+  try { const d = await api("guardar", { producto }); const i = lista.findIndex(p => p.id === d.producto.id); if (i >= 0) lista[i] = d.producto; else lista.push(d.producto); $("#dlg").close(); pintar(); }
+  catch (err) { $("#eProd").textContent = err.message; }
+  $("#guardar").disabled = false;
+};
+
+/* ---------- pedidos ---------- */
+const fecha = s => new Date(s).toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" });
+const METODO = { tarjeta: "Wompi", addi: "Addi", whatsapp: "WhatsApp" };
+async function cargarPedidos() { try { pedidos = await api("pedidos"); pintarPedidos(); } catch (err) { $("#pedidos").innerHTML = `<p class="vacio">${esc(err.message)}</p>`; } }
+function pintarPedidos() {
+  const f = $("#fEstado").value; const v = pedidos.filter(p => !f || p.estado === f);
+  $("#pedidos").innerHTML = v.map(p => `<div class="fila" style="grid-template-columns:1fr auto auto"><div><b style="font-weight:500">${esc(p.id)} · ${esc(p.nombre)}</b><small>${fecha(p.fecha)} · ${pesos(p.total)} · ${METODO[p.metodo] || p.metodo}</small></div>
+    <span class="pill ${esc(p.estado)}">${esc(p.estado)}</span><div class="acc"><button data-ver="${esc(p.id)}">Ver</button></div></div><div class="det" id="det-${esc(p.id)}"></div>`).join("") || `<p class="vacio">Todavía no hay pedidos.</p>`;
+}
+$("#fEstado").onchange = pintarPedidos; $("#recargar").onclick = cargarPedidos;
+$("#pedidos").onclick = async e => {
+  const b = e.target.closest("[data-ver]");
+  if (b) { const box = $("#det-" + CSS.escape(b.dataset.ver)); if (box.classList.toggle("ver")) {
+    box.innerHTML = "Cargando…"; try { const p = await api("pedido", { id: b.dataset.ver }); const c = p.cliente;
+      box.innerHTML = `<b>${esc(c.nombre)} ${esc(c.apellido)}</b> · CC ${esc(c.cedula)}<br>📱 <a href="https://wa.me/57${esc(c.celular)}" target="_blank" style="text-decoration:underline">${esc(c.celular)}</a> · ${esc(c.correo)}<br>📍 ${esc(c.direccion)}, ${esc(c.ciudad)} (${esc(c.departamento)})${c.notas ? `<br>📝 ${esc(c.notas)}` : ""}
+      <table>${p.items.map(i => `<tr><td>${i.cantidad} × ${esc(i.nombre)}</td><td style="text-align:right">${pesos(i.precio * i.cantidad)}</td></tr>`).join("")}<tr><td>Envío</td><td style="text-align:right">${p.envio ? pesos(p.envio) : "Gratis"}</td></tr><tr><td><b>Total</b></td><td style="text-align:right"><b>${pesos(p.total)}</b></td></tr></table>
+      ${p.pago ? `<small style="color:var(--gris)">Pago: ${esc(p.pago.via)} ${esc(p.pago.transaccion || p.pago.solicitud || "")} ${esc(p.pago.medio || p.pago.estado || "")}</small><br>` : ""}
+      <label class="campo" style="max-width:260px;margin-top:10px">Cambiar estado<select data-estado="${esc(p.id)}">${["pendiente","pagado","enviado","entregado","cancelado","rechazado"].map(s => `<option${s === p.estado ? " selected" : ""}>${s}</option>`).join("")}</select></label>`;
+    } catch (err) { box.textContent = err.message; } } }
+};
+$("#pedidos").onchange = async e => {
+  const s = e.target.closest("[data-estado]"); if (!s) return;
+  if (s.value === "pagado" && !confirm("¿Confirmas que este pedido ya está pagado?")) return;
+  try { await api("estado-pedido", { id: s.dataset.estado, estado: s.value }); const p = pedidos.find(x => x.id === s.dataset.estado); if (p) p.estado = s.value; }
+  catch (err) { alert(err.message); }
+};
+
+/* ---------- portada (carrusel) ---------- */
+let diaps = [], subirA = null;
+async function cargarPortada() { try { diaps = await api("banners"); pintarDiaps(); } catch (err) { $("#ePortada").textContent = err.message; } }
+const campo = (i, k, label, ph = "", max = 60) => `<label class="campo">${label}<input data-i="${i}" data-k="${k}" value="${esc(diaps[i][k] || "")}" placeholder="${ph}" maxlength="${max}"></label>`;
+function pintarDiaps() {
+  $("#diaps").innerHTML = diaps.map((b, i) => `<div class="diap${b.activo === false ? " off" : ""}">
+    <div><div class="prev" style="${b.imagen ? `background-image:url('${esc(b.imagen)}')` : ""}${b.completa ? ";background-size:contain;background-repeat:no-repeat" : ""}"><span>${b.completa ? (b.imagen ? "" : "Sin foto") : esc(b.linea1 || (b.imagen ? "" : "Sin foto"))}<em>${b.completa ? "" : esc(b.linea2 || "")}</em></span>${b.imagenMovil ? `<span class="mov">+ foto celular</span>` : ""}</div>
+      <div class="botones"><button type="button" data-foto="${i}" data-campo="imagen">${b.imagen ? "Cambiar foto" : "Subir foto"}</button><button type="button" data-foto="${i}" data-campo="imagenMovil">${b.imagenMovil ? "Cambiar" : "Agregar"} foto celular</button>${b.imagenMovil ? `<button type="button" data-sinmovil="${i}">Quitar foto celular</button>` : ""}</div></div>
+    <div style="display:grid;gap:10px">
+      <div class="g2">${campo(i, "linea1", "Título", "El detalle que eleva")}${campo(i, "linea2", "Segunda línea (dorada, cursiva)", "cualquier look")}</div>
+      ${campo(i, "texto", "Texto pequeño (opcional)", "Pulsos en Oro 18K", 160)}
+      <div class="g3">${campo(i, "boton", "Texto del botón", "Ver pulsos", 30)}${campo(i, "enlace", "Lleva a", "/tienda?cat=pulseras", 200)}
+        <label class="campo">Texto a la<select data-i="${i}" data-k="alinear">${["izquierda", "centro", "derecha"].map(a => `<option${a === b.alinear ? " selected" : ""}>${a}</option>`).join("")}</select></label></div>
+      <label style="display:flex;gap:8px;align-items:flex-start;font-size:14px;background:var(--crema);padding:10px 12px"><input type="checkbox" data-i="${i}" data-k="completa"${b.completa ? " checked" : ""}> <span><b style="font-weight:500">Foto ya diseñada</b> (con el texto incluido, por ejemplo hecha en Canva): se muestra completa, sin recortar y sin texto encima. Toda la foto lleva al enlace de abajo.</span></label>
+      <div class="checks"><label><input type="checkbox" data-i="${i}" data-k="activo"${b.activo !== false ? " checked" : ""}> Activa</label><label><input type="checkbox" data-i="${i}" data-k="oscurecer"${b.oscurecer !== false ? " checked" : ""}> Oscurecer la foto para que se lea el texto</label></div>
+      <div class="botones"><button type="button" data-mover="${i}" data-d="-1"${i ? "" : " disabled"}>↑ Subir</button><button type="button" data-mover="${i}" data-d="1"${i < diaps.length - 1 ? "" : " disabled"}>↓ Bajar</button><button type="button" data-borrar-d="${i}">Eliminar</button></div>
+    </div></div>`).join("") || `<p class="vacio">No hay diapositivas. Pulsa “+ Nueva diapositiva”.</p>`;
+}
+$("#nuevaDiap").onclick = () => { diaps.push({ linea1: "", linea2: "", texto: "", boton: "Ver colección", enlace: "/tienda", alinear: "izquierda", activo: true, oscurecer: true, imagen: "" }); pintarDiaps(); };
+$("#diaps").addEventListener("input", e => { const el = e.target.closest("[data-k]"); if (!el) return; diaps[+el.dataset.i][el.dataset.k] = el.type === "checkbox" ? el.checked : el.value; });
+$("#diaps").addEventListener("change", e => { if (e.target.matches('[type="checkbox"],select')) pintarDiaps(); });
+$("#diaps").addEventListener("click", e => {
+  const f = e.target.closest("[data-foto]"), m = e.target.closest("[data-mover]"), d = e.target.closest("[data-borrar-d]"), sm = e.target.closest("[data-sinmovil]");
+  if (f) { subirA = { i: +f.dataset.foto, campo: f.dataset.campo }; $("#archivoDiap").click(); }
+  if (m) { const i = +m.dataset.mover, j = i + +m.dataset.d; [diaps[i], diaps[j]] = [diaps[j], diaps[i]]; pintarDiaps(); }
+  if (d && confirm("¿Eliminar esta diapositiva?")) { diaps.splice(+d.dataset.borrarD, 1); pintarDiaps(); }
+  if (sm) { diaps[+sm.dataset.sinmovil].imagenMovil = ""; pintarDiaps(); }
+});
+$("#archivoDiap").onchange = async () => {
+  const file = $("#archivoDiap").files[0]; $("#archivoDiap").value = ""; if (!file || !subirA) return;
+  $("#ePortada").style.color = ""; $("#ePortada").textContent = "Subiendo foto…";
+  try { const b64 = await reducir(file, subirA.campo === "imagen" ? 1920 : 1350); const r = await api("foto", { tipo: "image/jpeg", base64: b64 });
+    diaps[subirA.i][subirA.campo] = r.url; $("#ePortada").textContent = "Foto lista. Recuerda pulsar “Guardar portada”."; pintarDiaps(); }
+  catch (err) { $("#ePortada").textContent = err.message; }
+};
+$("#guardarPortada").onclick = async () => {
+  if (diaps.some(b => !b.imagen)) return $("#ePortada").textContent = "Cada diapositiva necesita una foto (o elimina las que no tengan).";
+  try { const r = await api("guardar-banners", { banners: diaps }); diaps = r.banners; pintarDiaps(); $("#ePortada").style.color = "#1d6b35"; $("#ePortada").textContent = "Portada guardada ✓ Ya se ve en el inicio."; }
+  catch (err) { $("#ePortada").style.color = ""; $("#ePortada").textContent = err.message; }
+};
+
+/* ---------- ajustes ---------- */
+async function cargarAjustes() { try { const a = await api("ajustes"); for (const [k, v] of Object.entries(a)) { const el = $(`#fAjustes [name="${k}"]`); if (el) el.value = v; } } catch (err) { $("#eAjustes").textContent = err.message; } }
+$("#fAjustes").onsubmit = async e => { e.preventDefault(); const a = Object.fromEntries(new FormData(e.target));
+  try { await api("guardar-ajustes", { ajustes: a }); $("#eAjustes").style.color = "#1d6b35"; $("#eAjustes").textContent = "Ajustes guardados ✓"; }
+  catch (err) { $("#eAjustes").style.color = ""; $("#eAjustes").textContent = err.message; } };
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /api/
+Disallow: /carrito
+Disallow: /gracias
+
+Sitemap: https://joyeria-yireth.pages.dev/sitemap.xml
