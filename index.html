@@ -17,9 +17,23 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/estilos.css">
+<style>
+#intro{position:fixed;inset:0;z-index:9999;background:#2a1311;display:grid;place-items:center;transition:opacity .6s ease,visibility .6s}
+#intro.fuera{opacity:0;visibility:hidden}
+#intro .marca{display:flex;flex-direction:column;align-items:center;gap:18px;animation:introEntra 1s ease both}
+#intro img{height:min(30vh,190px);width:auto;filter:drop-shadow(0 0 28px #d9bd7c55)}
+#intro b{font:600 clamp(26px,5vw,40px)/1 "Cormorant Garamond",Georgia,serif;letter-spacing:.32em;padding-left:.32em;color:#faf7f2}
+#intro small{font:500 11px "Jost",sans-serif;letter-spacing:.6em;padding-left:.6em;color:#d9bd7c;margin-top:-8px}
+#intro .linea{width:120px;height:1px;background:linear-gradient(90deg,transparent,#d9bd7c,transparent);animation:introLinea 1.2s ease .3s both}
+@keyframes introEntra{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+@keyframes introLinea{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media(prefers-reduced-motion:reduce){#intro .marca,#intro .linea{animation:none}}
+</style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"JewelryStore","name":"Joyería Yireth","url":"https://joyeria-yireth.pages.dev/","image":"https://joyeria-yireth.pages.dev/img/compartir.png","logo":"https://joyeria-yireth.pages.dev/img/icono-512.png","telephone":"+57 318 511 2754","address":{"@type":"PostalAddress","streetAddress":"Cra 3 #13-57","addressLocality":"Puerto Boyacá","addressRegion":"Boyacá","addressCountry":"CO"},"sameAs":["https://www.instagram.com/yirethjoyeria/"],"paymentAccepted":"Tarjeta de crédito, tarjeta débito, PSE, Nequi, Addi","priceRange":"$$"}</script>
 </head>
 <body>
+<div id="intro" aria-hidden="true"><div class="marca"><img src="/img/emblema.png" alt="" width="132" height="190"><b>YIRETH</b><small>JOYERÍA</small><span class="linea"></span></div></div>
+<script>(function(){var i=document.getElementById("intro"),t0=Date.now(),hecho=false;function salir(){if(hecho)return;hecho=true;setTimeout(function(){i.classList.add("fuera");setTimeout(function(){i.remove()},700)},Math.max(0,1300-(Date.now()-t0)))}window.addEventListener("load",salir);setTimeout(salir,3500);window.addEventListener("pageshow",function(e){if(e.persisted)i&&i.remove()})})();</script>
 <div class="anuncio" data-anuncio>Paga a cuotas con Addi · Envíos a toda Colombia · Venta al detal y por mayor</div>
 <header class="cab">
   <div class="contenedor cab-fila">
