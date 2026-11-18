@@ -52,30 +52,6 @@
   .diap .botones{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
   .diap .botones button,.diap .botones label{padding:7px 10px;border:1px solid var(--linea);background:#fff;font-size:12.5px;cursor:pointer}
   @media(max-width:700px){.diap{grid-template-columns:1fr}}
-  .wa{display:grid;grid-template-columns:320px 1fr;gap:16px;height:calc(100vh - 210px);min-height:480px}
-  .wa-lista{background:#fff;border:1px solid var(--linea);overflow:auto}
-  .wa-item{display:block;width:100%;text-align:left;padding:12px 14px;border-bottom:1px solid var(--linea);background:#fff}
-  .wa-item.sel{background:var(--crema)}
-  .wa-item b{font-weight:500;display:flex;justify-content:space-between;gap:8px}
-  .wa-item small{color:var(--gris);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .wa-item .nl{background:#25d366;color:#fff;border-radius:10px;font-size:11px;padding:1px 7px}
-  .wa-item .hum{font-size:10.5px;background:#fff3d6;color:#8a6a2f;padding:1px 6px;margin-left:6px}
-  .wa-chat{background:#efe7dc;border:1px solid var(--linea);display:flex;flex-direction:column;min-height:0}
-  .wa-cab{background:#fff;padding:12px 16px;border-bottom:1px solid var(--linea);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-  .wa-msjs{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
-  .burbuja{max-width:72%;padding:8px 12px;border-radius:10px;font-size:14px;white-space:pre-wrap;word-break:break-word;box-shadow:0 1px 1px #0001}
-  .burbuja.in{background:#fff;align-self:flex-start}
-  .burbuja.out{background:#d9fdd3;align-self:flex-end}
-  .burbuja.out.bot{background:#ece4f9}
-  .burbuja small{display:block;font-size:10.5px;color:#7a7470;margin-top:4px;text-align:right}
-  .wa-escribir{display:flex;gap:8px;padding:10px;background:#fff;border-top:1px solid var(--linea)}
-  .wa-escribir textarea{flex:1;resize:none;padding:10px;border:1px solid var(--linea);font:inherit;height:46px}
-  .wa-aviso{padding:10px 14px;background:#fff8e6;color:#8a6a2f;font-size:13px}
-  .sub{display:flex;gap:6px;margin-bottom:14px}
-  .sub button{padding:8px 14px;border:1px solid var(--linea);background:#fff;font-size:13px}
-  .sub button.activo{background:var(--tinta);color:#fff}
-  .estado li{list-style:none;padding:8px 0;border-bottom:1px solid var(--linea);display:flex;justify-content:space-between}
-  @media(max-width:800px){.wa{grid-template-columns:1fr;height:auto}.wa-lista{max-height:260px}.wa-chat{height:70vh}}
   .det{background:#fff;border:1px solid var(--linea);padding:20px;margin-top:-4px;font-size:14px;display:none}
   .det.ver{display:block}
   .det table{width:100%;border-collapse:collapse;margin:10px 0}.det td{padding:6px 0;border-bottom:1px solid var(--linea)}
@@ -95,7 +71,7 @@
 <section class="panel contenedor" id="panel">
   <div class="top">
     <a class="logo" href="/" target="_blank" style="align-items:flex-start"><b style="font-size:24px;padding:0">YIRETH</b><small style="padding:0">PANEL</small></a>
-    <div class="tabs"><button class="tab activo" data-tab="productos">Productos</button><button class="tab" data-tab="portada">Portada</button><button class="tab" data-tab="pedidos">Pedidos</button><button class="tab" data-tab="whatsapp">WhatsApp <span id="waBadge" class="pill" style="background:#25d366;color:#fff;display:none"></span></button><button class="tab" data-tab="ajustes">Ajustes</button></div>
+    <div class="tabs"><button class="tab activo" data-tab="productos">Productos</button><button class="tab" data-tab="portada">Portada</button><button class="tab" data-tab="pedidos">Pedidos</button><button class="tab" data-tab="ajustes">Ajustes</button></div>
     <button class="btn btn-borde" id="salir" style="padding:10px 18px">Salir</button>
   </div>
 
@@ -118,36 +94,6 @@
     <input type="file" id="archivoDiap" accept="image/jpeg,image/png,image/webp" hidden>
   </div>
 
-  <div data-vista="whatsapp" hidden>
-    <div class="sub"><button class="activo" data-sub="chats">Chats</button><button data-sub="promos">Promociones</button><button data-sub="conexion">Conexión</button></div>
-    <div data-subv="chats">
-      <div class="wa">
-        <div class="wa-lista" id="waLista"><p class="vacio" style="border:0">Cargando…</p></div>
-        <div class="wa-chat" id="waChat"><p class="vacio" style="border:0;margin:auto">Elige un chat de la izquierda.</p></div>
-      </div>
-    </div>
-    <div data-subv="promos" hidden>
-      <div class="caja" style="max-width:760px">
-        <h2 style="font-size:28px">Enviar promoción</h2>
-        <p style="color:var(--gris);font-size:14px">WhatsApp solo permite enviar promociones con <b>plantillas aprobadas por Meta</b> y únicamente a clientes que aceptaron recibirlas (eligieron “Recibir promociones” en el chat o marcaron la casilla al comprar). Cada mensaje de promoción tiene un costo de Meta.</p>
-        <label class="campo">Plantilla<select id="pPlant"><option value="">Cargando…</option></select></label>
-        <div id="pVista" style="background:#d9fdd3;padding:12px;font-size:14px;white-space:pre-wrap;display:none"></div>
-        <label class="campo" id="pImgCampo" hidden>Enlace de la imagen (https://…)<input id="pImg" placeholder="https://joyeria-yireth.pages.dev/api/imagen?id=..."></label>
-        <p id="pInfoVars" style="font-size:13px;color:var(--gris)" hidden>La variable {{1}} se reemplaza por el nombre de cada cliente.</p>
-        <p id="pContactos" style="font-weight:500"></p>
-        <p class="error" id="ePromo"></p>
-        <button class="btn btn-negro" id="pEnviar">Enviar promoción</button>
-      </div>
-    </div>
-    <div data-subv="conexion" hidden>
-      <div class="caja" style="max-width:640px">
-        <h2 style="font-size:28px">Conexión con WhatsApp</h2>
-        <ul class="estado" id="waEstado"></ul>
-        <p style="color:var(--gris);font-size:13px">Los datos se configuran en Cloudflare (ver LEEME.md, sección WhatsApp). Cuando todo esté en verde, el bot empieza a responder. Con YCloud también puedes seguir respondiendo desde la app de WhatsApp Business del celular: cuando respondes desde el celular, el bot se pausa en ese chat por 12 horas.</p>
-      </div>
-    </div>
-  </div>
-
   <div data-vista="pedidos" hidden>
     <div class="barra"><select id="fEstado"><option value="">Todos los pedidos</option><option>pendiente</option><option>pagado</option><option>enviado</option><option>entregado</option><option>rechazado</option><option>cancelado</option></select><button class="btn btn-borde" id="recargar" style="padding:10px 18px">Actualizar</button></div>
     <div class="lista" id="pedidos"></div>
@@ -166,10 +112,6 @@
         <label class="campo">Costo del envío ($)<input name="envio" type="number" min="0" step="1000"></label>
         <label class="campo">Envío gratis desde ($, 0 = nunca)<input name="envioGratisDesde" type="number" min="0" step="10000"></label>
       </div>
-      <h3 style="font-size:22px;margin-top:10px">Bot de WhatsApp</h3>
-      <label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" name="botActivo" value="true"> Bot encendido (responde automáticamente)</label>
-      <label class="campo">Mensaje de bienvenida<textarea name="bienvenida" rows="2" maxlength="300"></textarea></label>
-      <label class="campo">Información extra para el bot (políticas, garantía, marcación, tiempos de entrega…)<textarea name="infoBot" rows="5" maxlength="3000" placeholder="Ej: Hacemos marcación de nombres en argollas sin costo. La garantía es de 6 meses por defectos de fabricación…"></textarea></label>
       <p class="error" id="eAjustes"></p>
       <button class="btn btn-negro">Guardar ajustes</button>
     </form>
@@ -234,7 +176,6 @@ $$(".tab").forEach(t => t.onclick = () => {
   if (t.dataset.tab === "pedidos") cargarPedidos();
   if (t.dataset.tab === "ajustes") cargarAjustes();
   if (t.dataset.tab === "portada") cargarPortada();
-  if (t.dataset.tab === "whatsapp") abrirWA(); else cerrarWA();
 });
 
 /* ---------- productos ---------- */
@@ -368,101 +309,9 @@ $("#guardarPortada").onclick = async () => {
   catch (err) { $("#ePortada").style.color = ""; $("#ePortada").textContent = err.message; }
 };
 
-/* ---------- WhatsApp ---------- */
-async function wa(accion, extra = {}) {
-  const r = await fetch("/api/wa-admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ clave, accion, ...extra }) });
-  if (!(r.headers.get("content-type") || "").includes("json")) throw new Error("Funciona cuando la tienda está publicada.");
-  const d = await r.json(); if (!r.ok) throw new Error(d.error || "Error"); return d;
-}
-let waSel = null, waTimer = null, waChats = [], plantillas = [];
-const hora = ts => ts ? new Date(ts).toLocaleString("es-CO", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : "";
-const fmtNum = n => n.startsWith("57") && n.length === 12 ? "+57 " + n.slice(2, 5) + " " + n.slice(5, 8) + " " + n.slice(8) : "+" + n;
-$$(".sub button").forEach(b => b.onclick = () => {
-  $$(".sub button").forEach(x => x.classList.toggle("activo", x === b));
-  $$("[data-subv]").forEach(v => v.hidden = v.dataset.subv !== b.dataset.sub);
-  if (b.dataset.sub === "promos") cargarPromos();
-  if (b.dataset.sub === "conexion") cargarEstado();
-});
-function abrirWA() { cargarChats(); clearInterval(waTimer); waTimer = setInterval(() => { cargarChats(true); if (waSel) cargarMensajes(waSel, true); }, 12000); }
-function cerrarWA() { clearInterval(waTimer); }
-async function cargarChats(silencio) {
-  try {
-    const antes = waChats.reduce((s, c) => s + c.no_leidos, 0);
-    waChats = await wa("chats");
-    const nl = waChats.reduce((s, c) => s + c.no_leidos, 0);
-    $("#waBadge").textContent = nl; $("#waBadge").style.display = nl ? "" : "none";
-    if (silencio && nl > antes) { try { new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=").play(); } catch {} document.title = `(${nl}) Panel | Joyería Yireth`; }
-    $("#waLista").innerHTML = waChats.map(c => `<button class="wa-item${c.numero === waSel ? " sel" : ""}" data-num="${esc(c.numero)}">
-      <b><span>${esc(c.nombre || fmtNum(c.numero))}${c.modo === "humano" && c.humano_hasta > Date.now() ? '<span class="hum">asesor</span>' : ""}</span>${c.no_leidos ? `<span class="nl">${c.no_leidos}</span>` : `<small>${hora(c.actualizado)}</small>`}</b>
-      <small>${esc(c.ultimo_texto || "")}</small></button>`).join("") || `<p class="vacio" style="border:0">Todavía no hay conversaciones.</p>`;
-  } catch (err) { if (!silencio) $("#waLista").innerHTML = `<p class="vacio" style="border:0">${esc(err.message)}</p>`; }
-}
-$("#waLista").onclick = e => { const b = e.target.closest("[data-num]"); if (b) { waSel = b.dataset.num; cargarMensajes(waSel); $$(".wa-item").forEach(x => x.classList.toggle("sel", x === b)); } };
-async function cargarMensajes(num, silencio) {
-  try {
-    const { chat, mensajes } = await wa("mensajes", { numero: num });
-    const humano = chat.modo === "humano" && chat.humano_hasta > Date.now();
-    const vencido = Date.now() - chat.ultimo_cliente > 24 * 3600e3;
-    const caja = $("#waChat"); const abajo = !silencio || (caja.querySelector(".wa-msjs") && caja.querySelector(".wa-msjs").scrollTop + caja.querySelector(".wa-msjs").clientHeight >= caja.querySelector(".wa-msjs").scrollHeight - 40);
-    const borrador = $("#waTexto")?.value || "";
-    caja.innerHTML = `<div class="wa-cab"><div><b style="font-weight:500">${esc(chat.nombre || "Cliente")}</b><br><small style="color:var(--gris)">${fmtNum(chat.numero)}${chat.opt_in ? " · acepta promociones" : ""}</small></div>
-      <div style="display:flex;gap:8px;align-items:center"><span class="pill">${humano ? "Atiende un asesor" : "Atiende el bot"}</span>
-      <button class="btn btn-borde" style="padding:8px 12px" id="waModo">${humano ? "Devolver al bot" : "Tomar conversación"}</button></div></div>
-      <div class="wa-msjs">${mensajes.map(m => `<div class="burbuja ${m.dir}${m.autor === "bot" ? " bot" : ""}">${esc(m.texto)}<small>${m.autor === "bot" ? "Bot · " : m.autor === "asesor" ? "Asesor · " : ""}${hora(m.ts)}</small></div>`).join("")}</div>
-      ${vencido ? `<div class="wa-aviso">Pasaron más de 24 horas desde el último mensaje del cliente: WhatsApp no deja escribirle un mensaje libre. Espera a que escriba o usa una plantilla.</div>` : ""}
-      <div class="wa-escribir"><textarea id="waTexto" placeholder="${vencido ? "Ventana de 24 h cerrada" : "Escribe tu respuesta… (al enviar, el bot se pausa en este chat)"}" ${vencido ? "disabled" : ""}></textarea><button class="btn btn-wa" id="waEnviar" style="padding:0 18px" ${vencido ? "disabled" : ""}>Enviar</button></div>`;
-    $("#waTexto").value = borrador;
-    const lista = caja.querySelector(".wa-msjs"); if (abajo) lista.scrollTop = lista.scrollHeight;
-    $("#waModo").onclick = async () => { try { await wa("modo", { numero: num, modo: humano ? "bot" : "humano" }); cargarMensajes(num); cargarChats(true); } catch (err) { alert(err.message); } };
-    const mandar = async () => { const t = $("#waTexto").value.trim(); if (!t) return; $("#waEnviar").disabled = true;
-      try { await wa("enviar", { numero: num, texto: t }); $("#waTexto").value = ""; cargarMensajes(num); } catch (err) { alert(err.message); } $("#waEnviar").disabled = false; };
-    $("#waEnviar").onclick = mandar;
-    $("#waTexto").onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); mandar(); } };
-  } catch (err) { if (!silencio) $("#waChat").innerHTML = `<p class="vacio" style="border:0;margin:auto">${esc(err.message)}</p>`; }
-}
-async function cargarEstado() {
-  try { const s = await wa("estado");
-    const fila = (ok, t) => `<li><span>${t}</span><b style="color:${ok ? "#1d6b35" : "#a3392b"}">${ok ? "✓ Listo" : "Falta"}</b></li>`;
-    $("#waEstado").innerHTML = fila(s.baseDatos, "Base de datos D1 (DB)") + fila(s.ia, "Inteligencia artificial (AI)") + (s.modo === "ycloud"
-      ? fila(s.apiKey, "Llave de YCloud (YCLOUD_API_KEY)") + fila(s.secreto, "Secreto del webhook (YCLOUD_WEBHOOK_SECRET)") + fila(s.numero, "Número de WhatsApp (WA_NUMERO)")
-      : fila(false, "YCloud: falta YCLOUD_API_KEY") + fila(s.token, "Meta: token (WA_TOKEN)") + fila(s.telefono, "Meta: ID del número (WA_PHONE_ID)") + fila(s.waba, "Meta: ID de la cuenta (WA_WABA_ID)") + fila(s.verificacion, "Meta: token de verificación") + fila(s.secreto, "Meta: clave secreta de la app"));
-  } catch (err) { $("#waEstado").innerHTML = `<li>${esc(err.message)}</li>`; }
-}
-let contactosPromo = [];
-async function cargarPromos() {
-  $("#ePromo").textContent = "";
-  try { contactosPromo = await wa("contactos-promo"); $("#pContactos").textContent = `${contactosPromo.length} clientes aceptaron recibir promociones.`; } catch (err) { $("#pContactos").textContent = err.message; }
-  try { plantillas = await wa("plantillas");
-    $("#pPlant").innerHTML = plantillas.length ? `<option value="">Elige una plantilla</option>` + plantillas.map((p, i) => `<option value="${i}">${esc(p.name)} (${esc(p.language)})</option>`).join("") : `<option value="">No hay plantillas aprobadas todavía</option>`;
-  } catch (err) { $("#pPlant").innerHTML = `<option value="">—</option>`; $("#ePromo").textContent = err.message; }
-}
-$("#pPlant").onchange = () => {
-  const p = plantillas[+$("#pPlant").value]; if (!p) { $("#pVista").style.display = "none"; return; }
-  const body = (p.components || []).find(c => c.type === "BODY")?.text || ""; const head = (p.components || []).find(c => c.type === "HEADER");
-  $("#pVista").textContent = (head?.text ? head.text + "\n\n" : "") + body; $("#pVista").style.display = "block";
-  $("#pImgCampo").hidden = head?.format !== "IMAGE"; $("#pInfoVars").hidden = !/\{\{1\}\}/.test(body);
-};
-$("#pEnviar").onclick = async () => {
-  const p = plantillas[+$("#pPlant").value]; if (!p) return $("#ePromo").textContent = "Elige una plantilla.";
-  if (!contactosPromo.length) return $("#ePromo").textContent = "No hay clientes que hayan aceptado promociones.";
-  const head = (p.components || []).find(c => c.type === "HEADER");
-  if (head?.format === "IMAGE" && !/^https:\/\//.test($("#pImg").value)) return $("#ePromo").textContent = "Esta plantilla necesita el enlace de una imagen.";
-  if (!confirm(`¿Enviar "${p.name}" a ${contactosPromo.length} clientes? Meta cobra cada mensaje de promoción.`)) return;
-  const body = (p.components || []).find(c => c.type === "BODY")?.text || "";
-  const variables = new Set((body.match(/\{\{\d+\}\}/g) || [])).size;
-  const plantilla = { nombre: p.name, idioma: p.language, variables, imagen: head?.format === "IMAGE" ? $("#pImg").value : "" };
-  let ok = 0, mal = 0; $("#pEnviar").disabled = true;
-  for (let i = 0; i < contactosPromo.length; i += 25) {
-    $("#ePromo").style.color = ""; $("#ePromo").textContent = `Enviando… ${i} de ${contactosPromo.length}`;
-    try { const r = await wa("enviar-promo", { plantilla, numeros: contactosPromo.slice(i, i + 25).map(c => c.numero) }); ok += r.enviados; mal += r.fallidos.length; }
-    catch (err) { $("#ePromo").textContent = err.message; break; }
-  }
-  $("#pEnviar").disabled = false; $("#ePromo").style.color = "#1d6b35"; $("#ePromo").textContent = `Listo: ${ok} enviados${mal ? `, ${mal} con error` : ""}.`;
-};
-
 /* ---------- ajustes ---------- */
 async function cargarAjustes() { try { const a = await api("ajustes"); for (const [k, v] of Object.entries(a)) { const el = $(`#fAjustes [name="${k}"]`); if (!el) continue; if (el.type === "checkbox") el.checked = v !== false; else el.value = v; } } catch (err) { $("#eAjustes").textContent = err.message; } }
-$("#fAjustes").onsubmit = async e => { e.preventDefault(); const a = Object.fromEntries(new FormData(e.target)); a.botActivo = $('#fAjustes [name="botActivo"]').checked;
+$("#fAjustes").onsubmit = async e => { e.preventDefault(); const a = Object.fromEntries(new FormData(e.target));
   try { await api("guardar-ajustes", { ajustes: a }); $("#eAjustes").style.color = "#1d6b35"; $("#eAjustes").textContent = "Ajustes guardados ✓"; }
   catch (err) { $("#eAjustes").style.color = ""; $("#eAjustes").textContent = err.message; } };
 </script>
