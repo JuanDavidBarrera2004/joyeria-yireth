@@ -72,6 +72,7 @@
       <label class="campo">Departamento<select name="departamento"><option>Amazonas</option><option>Antioquia</option><option>Arauca</option><option>Atlántico</option><option>Bogotá D.C.</option><option>Bolívar</option><option selected>Boyacá</option><option>Caldas</option><option>Caquetá</option><option>Casanare</option><option>Cauca</option><option>Cesar</option><option>Chocó</option><option>Córdoba</option><option>Cundinamarca</option><option>Guainía</option><option>Guaviare</option><option>Huila</option><option>La Guajira</option><option>Magdalena</option><option>Meta</option><option>Nariño</option><option>Norte de Santander</option><option>Putumayo</option><option>Quindío</option><option>Risaralda</option><option>San Andrés</option><option>Santander</option><option>Sucre</option><option>Tolima</option><option>Valle del Cauca</option><option>Vaupés</option><option>Vichada</option></select></label>
       <label class="campo">Ciudad o municipio<input name="ciudad" required value="Puerto Boyacá" autocomplete="address-level2"></label>
       <label class="campo full">Dirección<input name="direccion" required placeholder="Calle, número, barrio, apto" autocomplete="street-address"></label>
+      <label class="full" style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--gris)"><input type="checkbox" name="promos" value="1" style="margin-top:4px;accent-color:var(--tinta)"> Quiero recibir novedades y promociones de Joyería Yireth por WhatsApp (puedes darte de baja cuando quieras escribiendo SALIR).</label>
       <label class="campo full">Notas del pedido (opcional)<textarea name="notas" rows="2" placeholder="Talla del anillo, marcación, hora de entrega…"></textarea></label>
     </div>
     <h2 style="margin-top:34px">Forma de pago</h2>
@@ -134,13 +135,13 @@ pintar();
 $("#formPago")?.addEventListener("submit", async e => {
   e.preventDefault(); $("#error").textContent = "";
   const f = Object.fromEntries(new FormData(e.target));
-  const metodo = f.metodo; delete f.metodo;
+  const metodo = f.metodo; delete f.metodo; const promos = f.promos === "1"; delete f.promos;
   if (!f.nombre || !f.apellido || !f.cedula || !/^3\d{9}$/.test(f.celular.replace(/\D/g, "").replace(/^57/, "")) || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.correo) || !f.ciudad || !f.direccion)
     return $("#error").textContent = "Completa todos tus datos. El celular debe tener 10 dígitos y empezar por 3.";
   if (VISTA_PREVIA) return $("#error").textContent = "Vista previa: el pago funciona cuando la tienda está publicada.";
   $("#pagar").disabled = true; $("#pagar").textContent = "Procesando…";
   try {
-    const r = await fetch("/api/pedido", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cliente: f, metodo, items: Carrito.items.map(i => ({ id: i.id, cantidad: i.cantidad })) }) });
+    const r = await fetch("/api/pedido", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cliente: f, metodo, promos, items: Carrito.items.map(i => ({ id: i.id, cantidad: i.cantidad })) }) });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || "No se pudo crear el pedido");
     if (metodo === "whatsapp") { Carrito.vaciar(); window.open(d.url, "_blank", "noopener"); location.href = "/gracias?pedido=" + d.pedido + "&wa=1"; }
