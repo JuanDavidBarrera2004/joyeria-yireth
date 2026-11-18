@@ -143,7 +143,7 @@
       <div class="caja" style="max-width:640px">
         <h2 style="font-size:28px">Conexión con WhatsApp</h2>
         <ul class="estado" id="waEstado"></ul>
-        <p style="color:var(--gris);font-size:13px">Los datos se configuran en Cloudflare (ver LEEME.md, sección WhatsApp). Cuando todo esté en verde, el bot empieza a responder.</p>
+        <p style="color:var(--gris);font-size:13px">Los datos se configuran en Cloudflare (ver LEEME.md, sección WhatsApp). Cuando todo esté en verde, el bot empieza a responder. Con YCloud también puedes seguir respondiendo desde la app de WhatsApp Business del celular: cuando respondes desde el celular, el bot se pausa en ese chat por 12 horas.</p>
       </div>
     </div>
   </div>
@@ -423,7 +423,9 @@ async function cargarMensajes(num, silencio) {
 async function cargarEstado() {
   try { const s = await wa("estado");
     const fila = (ok, t) => `<li><span>${t}</span><b style="color:${ok ? "#1d6b35" : "#a3392b"}">${ok ? "✓ Listo" : "Falta"}</b></li>`;
-    $("#waEstado").innerHTML = fila(s.baseDatos, "Base de datos D1 (DB)") + fila(s.ia, "Inteligencia artificial (AI)") + fila(s.token, "Token de acceso (WA_TOKEN)") + fila(s.telefono, "ID del número (WA_PHONE_ID)") + fila(s.waba, "ID de la cuenta (WA_WABA_ID)") + fila(s.verificacion, "Token de verificación (WA_VERIFY_TOKEN)") + fila(s.secreto, "Clave secreta de la app (WA_APP_SECRET)");
+    $("#waEstado").innerHTML = fila(s.baseDatos, "Base de datos D1 (DB)") + fila(s.ia, "Inteligencia artificial (AI)") + (s.modo === "ycloud"
+      ? fila(s.apiKey, "Llave de YCloud (YCLOUD_API_KEY)") + fila(s.secreto, "Secreto del webhook (YCLOUD_WEBHOOK_SECRET)") + fila(s.numero, "Número de WhatsApp (WA_NUMERO)")
+      : fila(false, "YCloud: falta YCLOUD_API_KEY") + fila(s.token, "Meta: token (WA_TOKEN)") + fila(s.telefono, "Meta: ID del número (WA_PHONE_ID)") + fila(s.waba, "Meta: ID de la cuenta (WA_WABA_ID)") + fila(s.verificacion, "Meta: token de verificación") + fila(s.secreto, "Meta: clave secreta de la app"));
   } catch (err) { $("#waEstado").innerHTML = `<li>${esc(err.message)}</li>`; }
 }
 let contactosPromo = [];

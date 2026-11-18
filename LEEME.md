@@ -36,48 +36,46 @@ Mientras una pasarela no esté configurada, su opción aparece como "Muy pronto"
 ## Google
 Cuando tengas dominio propio: cambia `joyeria-yireth.pages.dev` por tu dominio en los archivos HTML y en `robots.txt`, verifica el dominio en Google Search Console y envía `sitemap.xml` (se actualiza solo con los productos).
 
-## Bot de WhatsApp (API oficial de Meta)
-El bot responde solo con un menú, contesta preguntas con IA usando los productos y precios reales del panel, pasa la conversación a un asesor cuando el cliente lo pide y permite enviar promociones a quienes aceptaron recibirlas. La dueña contesta desde el panel, en la pestaña **WhatsApp**.
+## Bot de WhatsApp (con YCloud, mismo número y app del celular)
+El bot responde solo con un menú, contesta preguntas con IA usando los productos y precios reales del panel, pasa la conversación a un asesor y permite enviar promociones a quienes aceptaron recibirlas.
+Con **YCloud** (plan gratis) el número 318 **sigue funcionando en la app de WhatsApp Business del celular**. La dueña puede leer y responder desde el celular o desde el panel (pestaña WhatsApp). Cuando responde desde el celular, el bot se calla 12 horas en ese chat.
 
-**Importante:** al conectar el número a la API de Meta, ese número deja de funcionar en la app de WhatsApp del celular. Antes de conectarlo, haz una copia de seguridad de los chats desde la app.
+### Antes de empezar
+- El 318 tiene que estar en **WhatsApp Business**, no en el WhatsApp normal, y con la app actualizada.
+- Tener a mano el **Facebook** de la dueña y su celular con WhatsApp Business.
+- **No** activar en YCloud su propio chatbot ni respuestas automáticas, porque el bot ya está en la página y responderían dos veces.
 
-### 1. Cloudflare (ya queda listo)
-- Settings → Bindings → **D1 database**: nombre `DB` (base de datos `yireth-whatsapp`).
-- Settings → Bindings → **Workers AI**: nombre `AI`.
+### 1. Cloudflare (ya está listo)
+Settings → Bindings: **D1 database** `DB` (yireth-whatsapp) y **Workers AI** `AI`.
 
-### 2. Meta (lo hace la dueña con su Facebook)
-1. Entra a **business.facebook.com** y crea (o usa) el portafolio comercial de Joyería Yireth.
-2. Entra a **developers.facebook.com** → Mis apps → **Crear app** → tipo **Empresa** → agrega el producto **WhatsApp**.
-3. En WhatsApp → **Configuración de la API**: agrega el número 318 511 2754 y verifícalo con el código por SMS o llamada. Antes, elimina la cuenta de WhatsApp de ese número en el celular (Ajustes → Cuenta → Eliminar cuenta), después de hacer la copia de seguridad.
-4. Agrega un **método de pago** en el portafolio (Meta cobra las promociones y los mensajes después de los gratis del mes).
-5. Crea un **usuario del sistema** (Configuración del negocio → Usuarios del sistema) con rol administrador, asígnale la app y la cuenta de WhatsApp, y genera un **token permanente** con los permisos `whatsapp_business_messaging` y `whatsapp_business_management`.
+### 2. YCloud
+1. Crea la cuenta gratis en **ycloud.com** (plan Free) con el correo de la joyería.
+2. **Conecta WhatsApp** y elige la opción de conectar el número que ya usas en la **app de WhatsApp Business** (coexistencia). Inicia sesión con el Facebook de la dueña, elige o crea el portafolio de Joyería Yireth, escribe el número 318 y **escanea el código QR desde la app de WhatsApp Business** del celular (Ajustes → Dispositivos vinculados / código que muestra Meta).
+3. Configura el pago de los mensajes de Meta (saldo o tarjeta), como indique YCloud.
+4. **Developers → API Keys**: crea una llave.
+5. **Developers → Webhook → Add endpoint**:
+   - URL: `https://joyeria-yireth.pages.dev/api/ycloud`
+   - Eventos: `whatsapp.inbound_message.received` y los de mensajes enviados desde la app (echo / smb message echoes).
+   - Guarda el **secreto** (signing secret) que te muestra.
 
 ### 3. Variables en Cloudflare (tipo Secret)
-| Variable | De dónde sale |
+| Variable | Valor |
 |---|---|
-| `WA_TOKEN` | Token permanente del usuario del sistema |
-| `WA_PHONE_ID` | WhatsApp → Configuración de la API → "Identificador del número de teléfono" |
-| `WA_WABA_ID` | WhatsApp → Configuración de la API → "Identificador de la cuenta de WhatsApp Business" |
-| `WA_APP_SECRET` | App → Configuración → Básica → "Clave secreta de la app" |
-| `WA_VERIFY_TOKEN` | Una palabra que tú inventes (ej. `yireth-bot-2026`) |
+| `YCLOUD_API_KEY` | La llave de YCloud |
+| `YCLOUD_WEBHOOK_SECRET` | El secreto del webhook |
+| `WA_NUMERO` | `+573185112754` |
 
-Reintenta la implementación.
+Reintenta la implementación. En el panel → WhatsApp → **Conexión** todo debe salir en verde. Escribe "Hola" al 318 desde otro celular para probar.
 
-### 4. Conectar el webhook
-En la app de Meta → WhatsApp → **Configuración** → Webhook:
-- URL de devolución de llamada: `https://joyeria-yireth.pages.dev/api/whatsapp`
-- Token de verificación: el mismo `WA_VERIFY_TOKEN`
-- Suscríbete al campo **messages**.
-
-En el panel → WhatsApp → **Conexión** todo debe aparecer en verde.
-
-### 5. Plantillas para promociones
-En WhatsApp Manager → **Plantillas** → crear plantilla de categoría **Marketing**. Puede llevar una imagen y la variable `{{1}}`, que el panel reemplaza por el nombre del cliente. Cuando Meta la aprueba, aparece en el panel → WhatsApp → Promociones.
+### 4. Plantillas para promociones
+En YCloud → **Templates** → crear plantilla de categoría **Marketing** (puede llevar imagen y la variable `{{1}}`, que el panel reemplaza por el nombre del cliente). Cuando Meta la aprueba, aparece en el panel → WhatsApp → Promociones.
 
 ### Cómo funciona para la dueña
-- Los chats llegan a la pestaña **WhatsApp** del panel, que se actualiza sola cada 12 segundos.
-- Si el cliente pide "asesor" o envía una foto, el bot se pausa en ese chat por 12 horas y el chat aparece marcado "asesor".
-- Cuando la dueña responde desde el panel, el bot también se pausa en ese chat.
-- **Devolver al bot** reactiva las respuestas automáticas. El cliente también puede escribir **MENU**.
-- WhatsApp solo deja escribir mensajes libres hasta 24 horas después del último mensaje del cliente. Pasado ese tiempo, solo con plantilla.
+- Puede responder **desde el celular** como siempre, o **desde el panel** (pestaña WhatsApp, se actualiza sola).
+- Si el cliente escribe "asesor" o envía una foto, el bot se pausa 12 horas en ese chat.
+- Cuando la dueña responde, desde el celular o desde el panel, el bot también se pausa en ese chat.
+- **Devolver al bot** en el panel, o que el cliente escriba **MENU**, reactiva las respuestas automáticas.
 - En **Ajustes** se puede apagar el bot, cambiar el saludo y darle información extra (garantía, marcación, tiempos).
+
+### Alternativa: Meta directo (sin YCloud)
+Si algún día se prefiere conectar directo con Meta: variables `WA_TOKEN`, `WA_PHONE_ID`, `WA_WABA_ID`, `WA_APP_SECRET`, `WA_VERIFY_TOKEN` y webhook `https://joyeria-yireth.pages.dev/api/whatsapp`. Si se hace así, el número **deja de funcionar en la app** del celular.
