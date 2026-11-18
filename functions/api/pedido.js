@@ -48,6 +48,17 @@ export async function onRequestPost({ env, request }) {
   const total = subtotal + envio;
   const metodo = ["tarjeta", "addi", "whatsapp"].includes(d.metodo) ? d.metodo : "whatsapp";
 
+  // opt-in de promociones por WhatsApp (si el bot está conectado)
+  if (d.promos === true && env.DB) {
+    try {
+      const { prepararDB } = await import("../../lib/whatsapp.js");
+      await prepararDB(env);
+      await env.DB.prepare(`INSERT INTO chats (numero, nombre, opt_in, actualizado) VALUES (?, ?, 1, ?)
+        ON CONFLICT(numero) DO UPDATE SET opt_in = 1, nombre = COALESCE(chats.nombre, excluded.nombre)`)
+        .bind("57" + cliente.celular, `${cliente.nombre} ${cliente.apellido}`, Date.now()).run();
+    } catch (e) { console.error("opt-in:", e.message); }
+  }
+
   const pedido = {
     id: "YJ" + Date.now().toString(36).toUpperCase() + aleatorio(4).toUpperCase(),
     token: aleatorio(16), fecha: new Date().toISOString(),
