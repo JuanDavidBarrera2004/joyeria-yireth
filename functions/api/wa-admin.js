@@ -1,6 +1,6 @@
 // POST /api/wa-admin → bandeja de WhatsApp y promociones del panel (requiere ADMIN_PASSWORD)
 import { json, claveCorrecta } from "../../lib/comun.js";
-import { waListo, prepararDB, enviar, enviarTexto, ponerModo } from "../../lib/whatsapp.js";
+import { waListo, usaYCloud, prepararDB, enviar, enviarTexto, ponerModo } from "../../lib/whatsapp.js";
 
 const API = env => `https://graph.facebook.com/${env.WA_API_VERSION || "v23.0"}`;
 const H24 = 24 * 3600 * 1000;
@@ -10,10 +10,10 @@ export async function onRequestPost({ env, request }) {
   let d; try { d = await request.json(); } catch { return json(400, { error: "Solicitud inválida" }); }
   if (!(await claveCorrecta(env, d.clave))) return json(401, { error: "Contraseña incorrecta" });
 
-  if (d.accion === "estado") return json(200, {
-    token: !!env.WA_TOKEN, telefono: !!env.WA_PHONE_ID, waba: !!env.WA_WABA_ID, verificacion: !!env.WA_VERIFY_TOKEN,
-    secreto: !!env.WA_APP_SECRET, baseDatos: !!env.DB, ia: !!env.AI, listo: waListo(env),
-  });
+  if (d.accion === "estado") return json(200, usaYCloud(env)
+    ? { modo: "ycloud", baseDatos: !!env.DB, ia: !!env.AI, apiKey: !!env.YCLOUD_API_KEY, secreto: !!env.YCLOUD_WEBHOOK_SECRET, numero: !!env.WA_NUMERO, listo: waListo(env) }
+    : { modo: "meta", token: !!env.WA_TOKEN, telefono: !!env.WA_PHONE_ID, waba: !!env.WA_WABA_ID, verificacion: !!env.WA_VERIFY_TOKEN,
+        secreto: !!env.WA_APP_SECRET, baseDatos: !!env.DB, ia: !!env.AI, listo: waListo(env) });
   if (!env.DB) return json(400, { error: "Falta conectar la base de datos D1 (nombre DB) en Cloudflare." });
   await prepararDB(env);
 
@@ -46,6 +46,12 @@ export async function onRequestPost({ env, request }) {
       return json(200, { ok: true });
     }
     case "plantillas": {
+      if (usaYCloud(env)) {
+        const r = await fetch(`https://api.ycloud.com/v2/whatsapp/templates?limit=100&filter.status=APPROVED`, { headers: { "X-API-Key": env.YCLOUD_API_KEY } });
+        const j = await r.json();
+        if (!r.ok) return json(502, { error: j?.error?.message || "Error consultando plantillas en YCloud" });
+        return json(200, (j.items || j.data || []).filter(t => (t.status || "APPROVED") === "APPROVED").map(t => ({ name: t.name, language: t.language, status: t.status, category: t.category, components: t.components || [] })));
+      }
       if (!env.WA_WABA_ID || !env.WA_TOKEN) return json(400, { error: "Falta WA_WABA_ID o WA_TOKEN en Cloudflare." });
       const r = await fetch(`${API(env)}/${env.WA_WABA_ID}/message_templates?fields=name,status,language,category,components&limit=100`, { headers: { Authorization: "Bearer " + env.WA_TOKEN } });
       const j = await r.json();
