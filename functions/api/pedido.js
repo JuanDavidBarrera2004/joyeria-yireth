@@ -36,6 +36,7 @@ export async function onRequestPost({ env, request }) {
     const p = lista.find(x => x.id === it.id && x.activo !== false);
     const cantidad = Math.max(1, Math.min(20, parseInt(it.cantidad, 10) || 1));
     if (!p) return json(400, { error: "Un producto de tu carrito ya no está disponible. Actualiza la página." });
+    if (!p.precio) return json(400, { error: `${p.nombre} no tiene precio publicado. Consúltalo por WhatsApp.` });
     if (p.stock !== null && p.stock !== undefined && p.stock < cantidad)
       return json(400, { error: `${p.nombre}: solo quedan ${p.stock} disponibles.` });
     items.push({ id: p.id, nombre: p.nombre, precio: p.precio, cantidad, imagen: p.imagenes?.[0] || "", categoria: p.categoria });
