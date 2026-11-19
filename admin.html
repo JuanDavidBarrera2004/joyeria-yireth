@@ -45,6 +45,7 @@
   .papelera{display:grid;place-items:center;color:#a3392b!important;border-color:#e8c4bd!important}.papelera svg{width:17px;height:17px}.papelera:hover{background:#fbeeeb!important}
   .btn-borrar{display:inline-flex;gap:8px;align-items:center;background:#fff;color:#a3392b;border:1px solid #e8c4bd}.btn-borrar svg{width:16px;height:16px}.btn-borrar:hover{background:#fbeeeb}
   #campoSub[hidden],#notaExcl[hidden]{display:none}
+  .sello-admin{align-self:center;margin-left:14px;padding:5px 10px;border:1px solid var(--oro);color:var(--oro-osc);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;white-space:nowrap}
   .globo{background:#a3392b;color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;margin-left:4px}
   .enc{display:grid;grid-template-columns:auto 1fr auto;gap:16px;background:#fff;border:1px solid var(--linea);padding:12px 14px;align-items:start}
   .enc-fotos{display:flex;gap:6px}.enc-fotos a{width:84px;height:84px;background:var(--marfil) center/cover;border:1px solid var(--linea)}
@@ -91,7 +92,7 @@
 
 <section class="panel contenedor" id="panel">
   <div class="top">
-    <a class="logo" href="/" target="_blank" title="Ver la tienda"><img src="/img/emblema-160.png" alt="" width="32" height="46" style="height:46px"><span class="txt"><b style="font-size:26px">YIRETH</b><small>JOYERÍA</small></span></a>
+    <div style="display:flex;align-items:center"><a class="logo" href="/" target="_blank" title="Ver la tienda"><img src="/img/emblema-160.png" alt="" width="32" height="46" style="height:46px"><span class="txt"><b style="font-size:26px">YIRETH</b><small>JOYERÍA</small></span></a><span class="sello-admin">Panel Admin</span></div>
     <div class="tabs"><button class="tab activo" data-tab="productos">Productos</button><button class="tab" data-tab="portada">Portada</button><button class="tab" data-tab="videos">Videos</button><button class="tab" data-tab="pedidos">Pedidos</button><button class="tab" data-tab="encargos">Encargos <span class="globo" id="globoEnc" hidden></span></button><button class="tab" data-tab="ajustes">Ajustes</button></div>
     <button class="btn btn-borde" id="salir" style="padding:10px 18px">Salir</button>
   </div>
