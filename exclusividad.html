@@ -74,11 +74,33 @@
   </ul>
   <h2>¿Cómo funciona?</h2>
   <ol>
-    <li><b>Cuéntanos tu idea</b> por WhatsApp o en la tienda, con fotos de referencia si las tienes.</li>
+    <li><b>Cuéntanos tu idea</b> con el formulario de abajo: puedes subir fotos del diseño que quieres.</li>
     <li><b>Te asesoramos</b> en el tipo de oro, el color, el peso y la medida, y te damos el precio.</li>
     <li><b>Fabricamos tu joya</b> y te avisamos cuando esté lista para recoger o enviar.</li>
   </ol>
-  <div class="hero-btns"><a class="btn btn-wa" data-wa="¡Hola Joyería Yireth! Quiero una joya exclusiva." href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c.5 2 2.5 4 4.5 4.5l1.2-1.2 2 1-.4 1.6c-3.5.5-8-4-7.5-7.5L10.4 7l1 2z"/></svg> Cuéntanos tu idea</a><a class="btn btn-borde" href="https://www.google.com/maps/search/?api=1&query=Cra+3+%2313-57+Puerto+Boyac%C3%A1" target="_blank" rel="noopener">Visítanos</a></div>
+  <h2 id="pedir">Envíanos tu diseño</h2>
+  <p>Sube hasta 3 fotos de la joya que quieres (de Instagram, Pinterest o una que ya tengas) y cuéntanos los detalles. Te respondemos por WhatsApp.</p>
+  <form class="form-encargo" id="fEnc" novalidate>
+    <div class="campos">
+      <label class="campo">Tu nombre<input name="nombre" required maxlength="60" autocomplete="name"></label>
+      <label class="campo">Celular (WhatsApp)<input name="celular" required inputmode="numeric" maxlength="13" placeholder="300 123 4567" autocomplete="tel"></label>
+      <label class="campo">¿Qué joya quieres?<select name="joya"><option value="">Elige una opción</option><option>Argollas de matrimonio</option><option>Anillo</option><option>Cadena</option><option>Pulsera</option><option>Aretes</option><option>Dije o inicial</option><option>Joya para 15 años</option><option>Otra</option></select></label>
+      <div class="g2-enc">
+        <label class="campo">Tipo de oro<select name="oro"><option value="">No sé</option><option>Oro 18K</option><option>Oro Italiano</option><option>Oro Nacional</option></select></label>
+        <label class="campo">Color<select name="color"><option value="">No sé</option><option>Amarillo</option><option>Blanco</option><option>Rosado</option></select></label>
+      </div>
+      <label class="campo full">Cuéntanos tu idea<textarea name="idea" rows="4" maxlength="800" placeholder="Ej: argollas de 4 mm con los nombres Ana y Luis grabados por dentro, talla 7 y 10"></textarea></label>
+      <div class="campo full">Fotos del diseño (hasta 3)
+        <div class="fotos-enc" id="fotosEnc"></div>
+        <input type="file" id="archEnc" accept="image/*" multiple hidden>
+      </div>
+      <input name="web" tabindex="-1" autocomplete="off" class="trampa" aria-hidden="true">
+    </div>
+    <p class="error" id="eEnc" role="alert"></p>
+    <button class="btn btn-negro" id="bEnc" style="margin-top:6px">Enviar mi diseño</button>
+  </form>
+  <div class="enc-listo" id="encListo" hidden></div>
+  <div class="hero-btns"><a class="btn btn-borde" data-wa="¡Hola Joyería Yireth! Quiero una joya exclusiva." href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c.5 2 2.5 4 4.5 4.5l1.2-1.2 2 1-.4 1.6c-3.5.5-8-4-7.5-7.5L10.4 7l1 2z"/></svg> Prefiero escribir por WhatsApp</a><a class="btn btn-borde" href="https://www.google.com/maps/search/?api=1&query=Cra+3+%2313-57+Puerto+Boyac%C3%A1" target="_blank" rel="noopener">Visítanos</a></div>
   <h2>Venta por mayor</h2>
   <p>¿Revendes joyería? Tenemos precios especiales por mayor en Oro 18K, italiano y nacional. Escríbenos para recibir el catálogo y las condiciones.</p>
   <div class="hero-btns"><a class="btn btn-negro" data-wa="¡Hola! Quiero información para comprar por mayor." href="#">Quiero comprar por mayor</a></div>
@@ -99,7 +121,41 @@
   </div>
 </footer>
 <script type="module">
-import { iniciar } from "/tienda.js"; iniciar();
+
+import { iniciar, esc, $ } from "/tienda.js";
+iniciar();
+let fotos = [];
+const pintarF = () => { $("#fotosEnc").innerHTML = fotos.map((f, i) => `<div class="foto-enc" style="background-image:url('data:${f.tipo};base64,${f.base64}')"><button type="button" data-q="${i}" aria-label="Quitar foto">×</button></div>`).join("") +
+  (fotos.length < 3 ? `<label class="subir-enc" for="archEnc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/></svg>Subir foto</label>` : ""); };
+pintarF();
+$("#fotosEnc").onclick = e => { const b = e.target.closest("[data-q]"); if (b) { fotos.splice(+b.dataset.q, 1); pintarF(); } };
+function reducir(f, max = 1600) {
+  return new Promise((ok, mal) => { const img = new Image(); img.onerror = () => mal(new Error("No pudimos leer la foto " + f.name + ". Prueba con otra."));
+    img.onload = () => { const s = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement("canvas");
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src); ok({ tipo: "image/jpeg", base64: c.toDataURL("image/jpeg", .85).split(",")[1] }); };
+    img.src = URL.createObjectURL(f); });
+}
+$("#archEnc").onchange = async () => {
+  $("#eEnc").textContent = "";
+  for (const f of [...$("#archEnc").files].slice(0, 3 - fotos.length)) { try { fotos.push(await reducir(f)); } catch (e) { $("#eEnc").textContent = e.message; } }
+  $("#archEnc").value = ""; pintarF();
+};
+$("#fEnc").onsubmit = async e => {
+  e.preventDefault(); const F = new FormData($("#fEnc")), d = Object.fromEntries(F); d.fotos = fotos;
+  if (!d.nombre.trim() || d.celular.replace(/\D/g, "").length < 10) return $("#eEnc").textContent = "Escribe tu nombre y tu celular de 10 dígitos.";
+  if (!d.idea.trim() && !fotos.length) return $("#eEnc").textContent = "Cuéntanos tu idea o sube al menos una foto.";
+  $("#bEnc").disabled = true; $("#bEnc").textContent = "Enviando…"; $("#eEnc").textContent = "";
+  try {
+    const r = await fetch("/api/encargo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(d) });
+    const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "No se pudo enviar. Inténtalo de nuevo.");
+    $("#fEnc").hidden = true;
+    $("#encListo").innerHTML = `<b>¡Recibimos tu diseño!</b><p>Tu número de solicitud es <b>${esc(j.id)}</b>. Toca el botón para enviarnos el mensaje por WhatsApp con tus fotos y te respondemos lo antes posible.</p><a class="btn btn-wa" href="${esc(j.url)}" target="_blank" rel="noopener">Enviar por WhatsApp</a>`;
+    $("#encListo").hidden = false; $("#encListo").scrollIntoView({ behavior: "smooth", block: "center" });
+  } catch (err) { $("#eEnc").textContent = err.message; }
+  $("#bEnc").disabled = false; $("#bEnc").textContent = "Enviar mi diseño";
+};
+
 </script>
 </body>
 </html>

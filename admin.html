@@ -42,6 +42,13 @@
   .foto button{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;background:#000a;color:#fff;font-size:13px}
   .foto .pri{position:absolute;left:2px;bottom:2px;font-size:10px;background:var(--tinta);color:#fff;padding:1px 5px}
   .subir{width:88px;height:88px;border:1px dashed var(--tenue);display:grid;place-items:center;text-align:center;font-size:12px;color:var(--gris);cursor:pointer;background:#fff}
+  .globo{background:#a3392b;color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;margin-left:4px}
+  .enc{display:grid;grid-template-columns:auto 1fr auto;gap:16px;background:#fff;border:1px solid var(--linea);padding:12px 14px;align-items:start}
+  .enc-fotos{display:flex;gap:6px}.enc-fotos a{width:84px;height:84px;background:var(--marfil) center/cover;border:1px solid var(--linea)}
+  .sin-foto{width:84px;height:84px;display:grid;place-items:center;background:var(--marfil);color:var(--gris);font-size:12px}
+  .enc-info small{display:block;color:var(--gris)}.enc-info p{margin-top:6px;font-size:14px;white-space:pre-wrap}
+  .enc-acc{display:flex;flex-direction:column;gap:6px;align-items:stretch}.enc-acc select,.enc-acc button{padding:8px 10px;border:1px solid var(--linea);background:#fff;font-size:13px}
+  @media(max-width:700px){.enc{grid-template-columns:1fr}.enc-acc{flex-direction:row;flex-wrap:wrap}}
   .subiendo{background:#fff;border:1px solid var(--linea);padding:14px 16px;margin-bottom:14px;font-size:14px}.barra-prog{height:6px;background:var(--crema);margin-top:8px}.barra-prog i{display:block;height:100%;width:0;background:var(--oro);transition:width .3s}
   .lista-videos{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
   .tarj-video{background:#fff;border:1px solid var(--linea);padding:10px;display:flex;flex-direction:column;gap:8px}.tarj-video.oculto{opacity:.55}
@@ -82,7 +89,7 @@
 <section class="panel contenedor" id="panel">
   <div class="top">
     <a class="logo" href="/" target="_blank" style="align-items:flex-start"><b style="font-size:24px;padding:0">YIRETH</b><small style="padding:0">PANEL</small></a>
-    <div class="tabs"><button class="tab activo" data-tab="productos">Productos</button><button class="tab" data-tab="portada">Portada</button><button class="tab" data-tab="videos">Videos</button><button class="tab" data-tab="pedidos">Pedidos</button><button class="tab" data-tab="ajustes">Ajustes</button></div>
+    <div class="tabs"><button class="tab activo" data-tab="productos">Productos</button><button class="tab" data-tab="portada">Portada</button><button class="tab" data-tab="videos">Videos</button><button class="tab" data-tab="pedidos">Pedidos</button><button class="tab" data-tab="encargos">Encargos <span class="globo" id="globoEnc" hidden></span></button><button class="tab" data-tab="ajustes">Ajustes</button></div>
     <button class="btn btn-borde" id="salir" style="padding:10px 18px">Salir</button>
   </div>
 
@@ -119,6 +126,14 @@
   <div data-vista="pedidos" hidden>
     <div class="barra"><select id="fEstado"><option value="">Todos los pedidos</option><option>pendiente</option><option>pagado</option><option>enviado</option><option>entregado</option><option>rechazado</option><option>cancelado</option></select><button class="btn btn-borde" id="recargar" style="padding:10px 18px">Actualizar</button></div>
     <div class="lista" id="pedidos"></div>
+  </div>
+
+  <div data-vista="encargos" hidden>
+    <div class="barra">
+      <p style="color:var(--gris);font-size:14px;max-width:620px">Diseños exclusivos que los clientes envían desde la página <b>Exclusividad</b>, con sus fotos de referencia. El cliente también te escribe por WhatsApp con el número de solicitud.</p>
+      <div style="display:flex;gap:8px"><select id="fEnc"><option value="">Todas</option><option value="nuevo">Nuevas</option><option value="en proceso">En proceso</option><option value="terminado">Terminadas</option></select><button class="btn btn-borde" id="recargarEnc" style="padding:12px 18px">Actualizar</button></div>
+    </div>
+    <div class="lista" id="encargos"></div>
   </div>
 
   <div data-vista="ajustes" hidden>
@@ -189,6 +204,7 @@ async function api(accion, extra = {}) {
 async function entrar() {
   lista = await api("listar"); sessionStorage.setItem("yj-clave", clave);
   $("#login").style.display = "none"; $("#panel").style.display = "block"; pintar();
+  api("encargos").then(l => { encargos = l; globo(); }).catch(() => {});
 }
 $("#fLogin").onsubmit = async e => { e.preventDefault(); clave = $("#clave").value; $("#eLogin").textContent = ""; try { await entrar(); } catch (err) { $("#eLogin").textContent = err.message; } };
 $("#salir").onclick = () => { sessionStorage.removeItem("yj-clave"); location.reload(); };
@@ -201,6 +217,7 @@ $$(".tab").forEach(t => t.onclick = () => {
   if (t.dataset.tab === "ajustes") cargarAjustes();
   if (t.dataset.tab === "portada") cargarPortada();
   if (t.dataset.tab === "videos") cargarVideos();
+  if (t.dataset.tab === "encargos") cargarEncargos();
 });
 
 /* ---------- productos ---------- */
@@ -276,6 +293,28 @@ $("#fProd").onsubmit = async e => {
   catch (err) { $("#eProd").textContent = err.message; }
   $("#guardar").disabled = false;
 };
+
+/* ---------- encargos (diseños exclusivos) ---------- */
+let encargos = [];
+const globo = () => { const n = encargos.filter(e => e.estado === "nuevo").length; $("#globoEnc").hidden = !n; $("#globoEnc").textContent = n; };
+async function cargarEncargos() { try { encargos = await api("encargos"); pintarEncargos(); globo(); } catch (err) { $("#encargos").innerHTML = `<p class="vacio">${esc(err.message)}</p>`; } }
+function pintarEncargos() {
+  const f = $("#fEnc").value, v = encargos.filter(e => !f || e.estado === f);
+  $("#encargos").innerHTML = v.map(e => `<div class="enc">
+    <div class="enc-fotos">${e.fotos.map(u => `<a href="${esc(u)}" target="_blank" style="background-image:url('${esc(u)}')" aria-label="Ver foto"></a>`).join("") || `<span class="sin-foto">Sin fotos</span>`}</div>
+    <div class="enc-info"><b style="font-weight:500">${esc(e.id)} · ${esc(e.nombre)}</b>
+      <small>${new Date(e.fecha).toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" })} · <a href="https://wa.me/57${esc(e.celular)}" target="_blank" style="text-decoration:underline">${esc(e.celular)}</a></small>
+      <small>${[e.joya, e.oro, e.color && "oro " + e.color.toLowerCase()].filter(Boolean).map(esc).join(" · ")}</small>
+      ${e.idea ? `<p>${esc(e.idea)}</p>` : ""}</div>
+    <div class="enc-acc"><select data-est="${esc(e.id)}">${["nuevo", "en proceso", "terminado"].map(x => `<option ${x === e.estado ? "selected" : ""}>${x}</option>`).join("")}</select>
+      <a class="btn btn-wa" style="padding:9px 12px;font-size:12px" href="https://wa.me/57${esc(e.celular)}?text=${encodeURIComponent(`¡Hola ${e.nombre}! Te escribimos de Joyería Yireth por tu diseño ${e.id}.`)}" target="_blank">Responder</a>
+      <button data-dele="${esc(e.id)}">Eliminar</button></div></div>`).join("") || `<p class="vacio">Todavía no hay solicitudes.</p>`;
+}
+$("#fEnc").onchange = pintarEncargos; $("#recargarEnc").onclick = cargarEncargos;
+$("#encargos").onchange = async e => { const s = e.target.closest("[data-est]"); if (!s) return;
+  try { await api("estado-encargo", { id: s.dataset.est, estado: s.value }); encargos.find(x => x.id === s.dataset.est).estado = s.value; globo(); } catch (err) { alert(err.message); } };
+$("#encargos").onclick = async e => { const b = e.target.closest("[data-dele]"); if (!b || !confirm("¿Eliminar esta solicitud y sus fotos?")) return;
+  try { await api("eliminar-encargo", { id: b.dataset.dele }); encargos = encargos.filter(x => x.id !== b.dataset.dele); pintarEncargos(); globo(); } catch (err) { alert(err.message); } };
 
 /* ---------- videos ---------- */
 let videos = [];
