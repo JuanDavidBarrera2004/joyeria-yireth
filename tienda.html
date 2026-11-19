@@ -51,9 +51,10 @@
     </div>
   </div>
   <nav class="nav" aria-label="Categorías"><ul>
-    <li><a href="/tienda" class="activo">Toda la joyería</a></li><li><a href="/tienda?cat=cadenas">Cadenas</a></li><li><a href="/tienda?cat=pulseras">Pulseras</a></li><li><a href="/tienda?cat=aretes">Aretes</a></li><li><a href="/tienda?cat=anillos">Anillos</a></li><li><a href="/tienda?cat=dijes-y-herrajes">Dijes y herrajes</a></li><li><a href="/tienda?cat=tejidas">Tejidas</a></li><li><a href="/tienda?cat=matrimonio">Matrimonio</a></li><li><a href="/tienda?cat=15-anos">15 años</a></li><li><a href="/tienda?cat=piercing">Piercing</a></li>
+    <li><a href="/tienda" class="activo">Toda la joyería</a></li><li><a href="/tienda?cat=cadenas">Cadenas</a></li><li><a href="/tienda?cat=pulseras">Pulseras</a></li><li><a href="/tienda?cat=aretes">Aretes</a></li><li><a href="/tienda?cat=anillos">Anillos</a></li><li><a href="/tienda?cat=dijes-y-herrajes">Dijes y herrajes</a></li><li><a href="/tienda?cat=tejidas">Tejidas</a></li><li><a href="/tienda?cat=balines">Balines</a></li><li><a href="/tienda?cat=matrimonio">Matrimonio</a></li><li><a href="/tienda?cat=15-anos">15 años</a></li><li><a href="/tienda?cat=piercing">Piercing</a></li>
     <li><a href="/tienda?oferta=1" class="rojo">Ofertas</a></li>
-    <li><a href="/exclusividad">Exclusividad</a></li>
+    <li><a href="/servicios">Servicios</a></li>
+        <li><a href="/exclusividad">Exclusividad</a></li>
   </ul></nav>
 </header>
 <main>
@@ -62,12 +63,14 @@
 <div class="contenedor">
   <div class="barra-filtros">
     <div class="chips" id="chips"></div>
+    <div class="chips subchips" id="subchips" hidden></div>
     <div class="selects">
       <select id="material" aria-label="Tipo de oro"><option value="">Todo tipo de oro</option><option>Oro 18K</option><option>Oro Italiano</option><option>Oro Nacional</option></select>
       <select id="color" aria-label="Color"><option value="">Todo color</option><option value="Amarillo">Oro amarillo</option><option value="Blanco">Oro blanco</option><option value="Rosado">Oro rosado</option></select>
       <select id="orden" aria-label="Ordenar"><option value="">Destacados</option><option value="nuevo">Más nuevos</option><option value="menor">Menor precio</option><option value="mayor">Mayor precio</option></select>
     </div>
   </div>
+  <a class="tejida-aviso" id="avisoTejida" href="/arma-tu-tejida" hidden>✦ <b>Arma tu pulsera tejida:</b> elige hilo, herraje y balines y mira cómo queda →</a>
   <p id="conteo" style="color:var(--gris);font-size:13px;margin:-16px 0 20px"></p>
   <div class="rejilla" id="grilla" style="margin-bottom:90px"></div>
 </div>
@@ -79,7 +82,7 @@
       <div><a class="logo" href="/" aria-label="Joyería Yireth, inicio"><img src="/img/emblema-160.png" alt="" width="39" height="56"><span class="txt"><b>YIRETH</b><small>JOYERÍA</small></span></a><p style="margin-top:18px;max-width:300px">Joyería en Oro 18K, Oro Italiano y Oro Nacional en Puerto Boyacá. Oro amarillo, blanco y rosado, diseños exclusivos y venta al detal y por mayor.</p>
         <div class="redes"><a href="https://www.instagram.com/yirethjoyeria/" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor"/></svg></a><a href="https://www.tiktok.com/@joyeriayireth1998" target="_blank" rel="noopener" aria-label="TikTok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 3c.4 2.6 2.2 4.4 5 4.6"/></svg></a><a href="https://www.facebook.com/profile.php?id=61573792435762" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4a20 20 0 0 0-2.4-.1c-2.4 0-3.9 1.4-3.9 4v2.2H8.6v3h2.7V21"/></svg></a><a data-wa href="#" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c.5 2 2.5 4 4.5 4.5l1.2-1.2 2 1-.4 1.6c-3.5.5-8-4-7.5-7.5L10.4 7l1 2z"/></svg></a></div></div>
       <div><h4>Tienda</h4><ul><li><a href="/tienda">Toda la joyería</a></li><li><a href="/tienda?cat=cadenas">Cadenas</a></li><li><a href="/tienda?cat=matrimonio">Matrimonio</a></li><li><a href="/tienda?cat=15-anos">15 años</a></li><li><a href="/tienda?oferta=1">Ofertas</a></li></ul></div>
-      <div><h4>Ayuda</h4><ul><li><a href="/exclusividad">Diseños exclusivos</a></li><li><a href="/politicas#envios">Envíos</a></li><li><a href="/politicas#cambios">Cambios y garantía</a></li><li><a href="/politicas#privacidad">Privacidad</a></li><li><a data-wa href="#">Escríbenos</a></li></ul></div>
+      <div><h4>Ayuda</h4><ul><li><a href="/exclusividad">Diseños exclusivos</a></li><li><a href="/servicios">Fabricación y reparación</a></li><li><a href="/arma-tu-tejida">Arma tu pulsera tejida</a></li><li><a href="/politicas#envios">Envíos</a></li><li><a href="/politicas#cambios">Cambios y garantía</a></li><li><a href="/politicas#privacidad">Privacidad</a></li><li><a data-wa href="#">Escríbenos</a></li></ul></div>
       <div><h4>Visítanos</h4><ul><li data-direccion>Cra 3 #13-57, Puerto Boyacá, Boyacá</li><li data-horario>Lunes a sábado</li><li><a data-wa href="#">WhatsApp 318 511 2754</a></li></ul>
         <div class="pagos-pie"><span>Visa</span><span>Mastercard</span><span>PSE</span><span>Nequi</span><span>Addi</span></div></div>
     </div>
@@ -88,32 +91,38 @@
 </footer>
 <script type="module">
 
-import { iniciar, productos, pintarRejilla, CATEGORIAS, slug, $ } from "/tienda.js";
+import { iniciar, productos, pintarRejilla, CATEGORIAS, SUBCATEGORIAS, slug, $ } from "/tienda.js";
 iniciar();
 const l = await productos();
 const P = new URLSearchParams(location.search);
 const MARCAS = { oferta: ["Ofertas", p => p.precioAntes], nuevo: ["Nuevos", p => p.nuevo], tendencia: ["Tendencia", p => p.destacado], top: ["★ Top ventas", p => p.top] };
 let cat = CATEGORIAS.find(c => slug(c) === P.get("cat")) || "", q = P.get("q") || "", max = +P.get("max") || 0;
 let ver = P.get("oferta") === "1" ? "oferta" : MARCAS[P.get("ver")] ? P.get("ver") : "";
+let sub = (SUBCATEGORIAS[cat] || []).find(x => slug(x) === P.get("sub")) || "";
+const url = () => history.replaceState(null, "", "/tienda" + (ver ? "?ver=" + ver : cat ? "?cat=" + slug(cat) + (sub ? "&sub=" + slug(sub) : "") : ""));
 $("#orden").value = P.get("orden") || "";
 const cats = CATEGORIAS.filter(c => l.some(p => p.categoria === c));
 function chips() {
   $("#chips").innerHTML = [["", "Todas"], ...cats.map(c => [c, c])].map(([v, t]) => `<button class="chip${v === cat && !ver ? " activo" : ""}" data-c="${v}">${t}</button>`).join("") +
     Object.entries(MARCAS).filter(([k, [, f]]) => k === ver || l.some(f)).map(([k, [t]]) => `<button class="chip${ver === k ? " activo" : ""}" data-ver="${k}">${t}</button>`).join("");
+  const subs = ver ? [] : SUBCATEGORIAS[cat] || [];
+  $("#subchips").hidden = !subs.length;
+  $("#subchips").innerHTML = [["", "Todos"], ...subs.map(x => [x, x])].map(([v, t]) => `<button class="chip${v === sub ? " activo" : ""}" data-s="${v}">${t}</button>`).join("");
 }
 function pintar() {
-  let r = l.filter(p => (!cat || p.categoria === cat) && (!ver || MARCAS[ver][1](p)) && (!max || (p.precio && p.precio <= max)) &&
+  let r = l.filter(p => (!cat || p.categoria === cat) && (!sub || p.sub === sub) && (!ver || MARCAS[ver][1](p)) && (!max || (p.precio && p.precio <= max)) &&
     (!$("#material").value || p.material === $("#material").value) && (!$("#color").value || (p.colores || []).includes($("#color").value)) &&
     (!q || (p.nombre + " " + p.categoria + " " + p.material + " " + (p.descripcion||"")).toLowerCase().includes(q.toLowerCase())));
   const o = $("#orden").value;
   if (o === "menor") r.sort((a, b) => (a.precio || 1e12) - (b.precio || 1e12)); else if (o === "mayor") r.sort((a, b) => b.precio - a.precio); else if (o === "nuevo") r.sort((a, b) => (b.nuevo|0) - (a.nuevo|0));
-  $("#titulo").textContent = q ? `Resultados para “${q}”` : ver ? MARCAS[ver][0] : max ? `Joyas por menos de $${max.toLocaleString("es-CO")}` : cat || "Toda la joyería";
+  $("#titulo").textContent = q ? `Resultados para “${q}”` : ver ? MARCAS[ver][0] : max ? `Joyas por menos de $${max.toLocaleString("es-CO")}` : cat ? cat + (sub ? " · " + sub : "") : "Toda la joyería";
   document.title = ($("#titulo").textContent) + " | Joyería Yireth";
   $("#conteo").textContent = r.length + (r.length === 1 ? " joya" : " joyas");
+  $("#avisoTejida").hidden = cat !== "Tejidas";
   pintarRejilla($("#grilla"), r, q ? "No encontramos joyas con esa búsqueda. Escríbenos por WhatsApp y te ayudamos." : "Pronto nuevas joyas en esta categoría.");
 }
-$("#chips").onclick = e => { const b = e.target.closest(".chip"); if (!b) return; ver = b.dataset.ver || ""; cat = ver ? "" : b.dataset.c; q = ""; max = 0;
-  history.replaceState(null, "", "/tienda" + (ver ? "?ver=" + ver : cat ? "?cat=" + slug(cat) : "")); chips(); pintar(); };
+$("#chips").onclick = e => { const b = e.target.closest(".chip"); if (!b) return; ver = b.dataset.ver || ""; cat = ver ? "" : b.dataset.c; sub = ""; q = ""; max = 0; url(); chips(); pintar(); };
+$("#subchips").onclick = e => { const b = e.target.closest(".chip"); if (!b) return; sub = b.dataset.s; url(); chips(); pintar(); };
 $("#material").onchange = $("#color").onchange = $("#orden").onchange = pintar;
 if (P.get("color")) $("#color").value = P.get("color"); if (P.get("material")) $("#material").value = P.get("material");
 chips(); pintar();

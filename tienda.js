@@ -1,5 +1,6 @@
 // Joyería Yireth — lógica común de la tienda
-import { EJEMPLOS, AJUSTES_BASE, CATEGORIAS, COLORES } from "/lib/datos.js";
+import { EJEMPLOS, AJUSTES_BASE, CATEGORIAS, SUBCATEGORIAS, COLORES } from "/lib/datos.js";
+export { SUBCATEGORIAS };
 export { COLORES };
 export const puntos = cs => cs?.length ? `<span class="puntos">${cs.map(c => `<i style="background:${COLORES[c]}" title="Oro ${c.toLowerCase()}"></i>`).join("")}</span>` : "";
 
@@ -46,9 +47,10 @@ export const ARTE = {
   argollas: `<svg viewBox="0 0 64 64" ${S}><circle cx="25" cy="36" r="14"/><circle cx="25" cy="36" r="11"/><circle cx="40" cy="30" r="14"/><circle cx="40" cy="30" r="11"/></svg>`,
   corona: `<svg viewBox="0 0 64 64" ${S}><path d="M12 44l4-22 10 10 6-14 6 14 10-10 4 22z"/><path d="M12 50h40"/><circle cx="32" cy="16" r="2"/></svg>`,
   piercing: `<svg viewBox="0 0 64 64" ${S}><path d="M44 22a14 14 0 1 1-24 0"/><circle cx="20" cy="22" r="3"/><circle cx="44" cy="22" r="3"/></svg>`,
+  balines: `<svg viewBox="0 0 64 64" ${S}><path d="M8 40c8-10 16-14 24-14s16 4 24 14"/>${[10, 18, 26, 34, 42, 50].map((x, i) => `<circle cx="${x + 2}" cy="${[37, 31, 28, 28, 31, 37][i]}" r="3.2"/>`).join("")}</svg>`,
   set: `<svg viewBox="0 0 64 64" ${S}><path d="M10 10c3 14 10 22 18 24 8-2 15-10 18-24"/><path d="M28 34l-3 6h6z"/><circle cx="48" cy="44" r="8"/><circle cx="48" cy="44" r="5.5"/></svg>`,
 };
-const ARTE_CAT = { Cadenas: "cadena", Pulseras: "pulsera", Aretes: "arete", Anillos: "anillo", "Dijes y herrajes": "dije", Tejidas: "tejida", Matrimonio: "argollas", "15 años": "corona", Piercing: "piercing", Sets: "set", Otros: "dije" };
+const ARTE_CAT = { Cadenas: "cadena", Pulseras: "pulsera", Aretes: "arete", Anillos: "anillo", "Dijes y herrajes": "dije", Tejidas: "tejida", Balines: "balines", Matrimonio: "argollas", "15 años": "corona", Piercing: "piercing", Sets: "set", Otros: "dije" };
 export const arte = cat => ARTE[ARTE_CAT[cat] || "dije"];
 
 /* ---------- tarjeta de producto ---------- */

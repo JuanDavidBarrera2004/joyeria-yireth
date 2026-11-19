@@ -365,3 +365,38 @@ label.campo{display:grid;gap:6px;font-size:12.5px;letter-spacing:.06em;color:var
 .enc-listo p{margin-bottom:16px!important}
 @media(max-width:640px){.form-encargo{padding:18px}.campos .campo,.g2-enc{grid-column:1/-1}.foto-enc,.subir-enc{width:94px;height:94px}}
 @media(max-width:640px){.red-extra{display:none}}
+.subchips{flex-basis:100%;order:2;gap:6px}.subchips .chip{font-size:11.5px;padding:6px 12px;border-color:var(--oro);color:var(--oro-osc);background:transparent}
+.subchips .chip.activo{background:var(--oro);color:#fff;border-color:var(--oro)}.barra-filtros .selects{order:3}
+/* ---------- servicios ---------- */
+.servicios{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.servicio{background:var(--blanco);border:1px solid var(--linea);padding:34px;display:flex;flex-direction:column;gap:10px}
+.servicio h2{font-size:36px}.servicio h3{font-family:var(--f-tit);font-size:28px;font-weight:500}
+.serv-ico{width:54px;height:54px;border-radius:50%;background:var(--crema);color:var(--oro-osc);display:grid;place-items:center}.serv-ico svg{width:26px;height:26px}
+.serv-sub{color:var(--oro-osc);font-size:12px;letter-spacing:.18em;text-transform:uppercase}
+.servicio ul{padding-left:18px;color:var(--gris);font-size:14.5px;line-height:1.9}
+.servicio .hero-btns{margin-top:auto;padding-top:10px}
+.servicios.mini .servicio{transition:border-color .25s,transform .25s}.servicios.mini .servicio:hover{border-color:var(--oro);transform:translateY(-3px)}
+.servicios.mini p:not(.serv-sub){color:var(--gris);font-size:14.5px}
+@media(max-width:760px){.servicios{grid-template-columns:1fr}.servicio{padding:24px}}
+/* ---------- arma tu tejida ---------- */
+.tejida-promo{display:grid;grid-template-columns:1fr 1.2fr;align-items:center;gap:30px;background:var(--crema);padding:38px 44px}
+.tejida-promo h2{font-size:44px;margin:6px 0 10px}.tejida-promo p{color:var(--gris);margin-bottom:20px}.tejida-promo img{width:100%}
+@media(max-width:760px){.tejida-promo{grid-template-columns:1fr;padding:28px 22px}.tejida-promo h2{font-size:34px}}
+.tejida-aviso{display:block;background:var(--crema);border-left:3px solid var(--oro);padding:12px 16px;margin:-14px 0 26px;font-size:14px}.tejida-aviso[hidden]{display:none}
+.simulador{display:grid;grid-template-columns:1.25fr 1fr;gap:34px;align-items:start}
+.sim-vista{position:sticky;top:150px}.sim-vista svg{width:100%;display:block;border:1px solid var(--linea)}
+.sim-nota{color:var(--gris);font-size:12.5px;margin-top:8px}
+.sim-grupo{margin-bottom:24px}.sim-grupo>b{display:block;font-weight:500;margin-bottom:10px}.sim-grupo>b span{color:var(--oro-osc);font-weight:400;margin-left:6px}
+.sim-colores{display:flex;flex-wrap:wrap;gap:10px}.sim-colores button{width:34px;height:34px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--linea);cursor:pointer}
+.sim-colores button.sel{box-shadow:0 0 0 2px var(--tinta)}
+.sim-herrajes{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.sim-herrajes button{background:var(--blanco);border:1px solid var(--linea);padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;cursor:pointer}
+.sim-herrajes svg{width:36px;height:36px}.sim-herrajes button.sel,.sim-opc button.sel{border-color:var(--tinta);box-shadow:inset 0 0 0 1px var(--tinta)}
+.sim-letra{display:flex;gap:10px;align-items:center;margin-top:10px;font-size:14px}.sim-letra input{width:54px;padding:8px;border:1px solid var(--linea);text-align:center;font-size:18px;text-transform:uppercase}
+.sim-opc{display:flex;gap:8px;flex-wrap:wrap}.sim-opc button{background:var(--blanco);border:1px solid var(--linea);padding:9px 16px;font-size:14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.sim-opc i{width:16px;height:16px;border-radius:50%}
+.sim-resumen{background:var(--crema);padding:14px 16px;font-size:14px;margin-bottom:16px}
+@media(max-width:900px){.simulador{grid-template-columns:1fr}.sim-vista{position:sticky;top:66px;z-index:5;background:var(--marfil);padding-bottom:6px}.sim-herrajes{grid-template-columns:repeat(5,1fr)}}
+@media(max-width:480px){.sim-herrajes{grid-template-columns:repeat(4,1fr)}}
+.subchips[hidden]{display:none}
+@media(min-width:901px) and (max-width:1480px){.nav ul{gap:15px}.nav a{letter-spacing:.08em;font-size:11.5px}}
