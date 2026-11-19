@@ -3,7 +3,7 @@ import { leerProductos } from "../lib/comun.js";
 
 export async function onRequestGet({ env, request }) {
   const o = new URL(request.url).origin;
-  const fijas = ["/", "/tienda", "/exclusividad", "/politicas"];
+  const fijas = ["/", "/tienda", "/exclusividad", "/servicios", "/arma-tu-tejida", "/politicas"];
   const prods = env.TIENDA ? (await leerProductos(env)).filter(p => p.activo !== false) : [];
   const urls = [...fijas.map(u => `<url><loc>${o}${u}</loc></url>`),
     ...prods.map(p => `<url><loc>${o}/producto/${p.id}</loc></url>`)].join("\n  ");
