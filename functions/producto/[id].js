@@ -19,8 +19,8 @@ export async function onRequestGet({ env, params, request }) {
   const datos = {
     "@context": "https://schema.org", "@type": "Product", name: p.nombre, image: [img], description: desc,
     sku: p.id, brand: { "@type": "Brand", name: "Joyería Yireth" }, category: p.categoria, material: p.material,
-    offers: { "@type": "Offer", url, priceCurrency: "COP", price: p.precio,
-      availability: p.stock === 0 ? "https://schema.org/OutOfStock" : "https://schema.org/InStock" },
+    ...(p.precio ? { offers: { "@type": "Offer", url, priceCurrency: "COP", price: p.precio,
+      availability: p.stock === 0 ? "https://schema.org/OutOfStock" : "https://schema.org/InStock" } } : {}),
   };
   const seo = `<title>${esc(p.nombre)} | Joyería Yireth</title>
 <meta name="description" content="${esc(desc)}">
