@@ -362,3 +362,4 @@ label.campo{display:grid;gap:6px;font-size:12.5px;letter-spacing:.06em;color:var
 .enc-listo b:first-child{font-family:var(--f-tit);font-size:26px;font-weight:500;display:block;margin-bottom:6px;color:var(--tinta)}
 .enc-listo p{margin-bottom:16px!important}
 @media(max-width:640px){.form-encargo{padding:18px}.campos .campo,.g2-enc{grid-column:1/-1}.foto-enc,.subir-enc{width:94px;height:94px}}
+@media(max-width:640px){.red-extra{display:none}}

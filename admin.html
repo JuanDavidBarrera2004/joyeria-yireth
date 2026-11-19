@@ -42,6 +42,8 @@
   .foto button{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;background:#000a;color:#fff;font-size:13px}
   .foto .pri{position:absolute;left:2px;bottom:2px;font-size:10px;background:var(--tinta);color:#fff;padding:1px 5px}
   .subir{width:88px;height:88px;border:1px dashed var(--tenue);display:grid;place-items:center;text-align:center;font-size:12px;color:var(--gris);cursor:pointer;background:#fff}
+  .papelera{display:grid;place-items:center;color:#a3392b!important;border-color:#e8c4bd!important}.papelera svg{width:17px;height:17px}.papelera:hover{background:#fbeeeb!important}
+  .btn-borrar{display:inline-flex;gap:8px;align-items:center;background:#fff;color:#a3392b;border:1px solid #e8c4bd}.btn-borrar svg{width:16px;height:16px}.btn-borrar:hover{background:#fbeeeb}
   .globo{background:#a3392b;color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;margin-left:4px}
   .enc{display:grid;grid-template-columns:auto 1fr auto;gap:16px;background:#fff;border:1px solid var(--linea);padding:12px 14px;align-items:start}
   .enc-fotos{display:flex;gap:6px}.enc-fotos a{width:84px;height:84px;background:var(--marfil) center/cover;border:1px solid var(--linea)}
@@ -124,14 +126,14 @@
   </div>
 
   <div data-vista="pedidos" hidden>
-    <div class="barra"><select id="fEstado"><option value="">Todos los pedidos</option><option>pendiente</option><option>pagado</option><option>enviado</option><option>entregado</option><option>rechazado</option><option>cancelado</option></select><button class="btn btn-borde" id="recargar" style="padding:10px 18px">Actualizar</button></div>
+    <div class="barra"><select id="fEstado"><option value="">Todos los pedidos</option><option>pendiente</option><option>pagado</option><option>enviado</option><option>entregado</option><option>rechazado</option><option>cancelado</option></select><div style="display:flex;gap:8px"><button class="btn btn-borrar" id="borrarPed" style="padding:12px 16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span>Eliminar todo</span></button><button class="btn btn-borde" id="recargar" style="padding:10px 18px">Actualizar</button></div></div>
     <div class="lista" id="pedidos"></div>
   </div>
 
   <div data-vista="encargos" hidden>
     <div class="barra">
       <p style="color:var(--gris);font-size:14px;max-width:620px">Diseños exclusivos que los clientes envían desde la página <b>Exclusividad</b>, con sus fotos de referencia. El cliente también te escribe por WhatsApp con el número de solicitud.</p>
-      <div style="display:flex;gap:8px"><select id="fEnc"><option value="">Todas</option><option value="nuevo">Nuevas</option><option value="en proceso">En proceso</option><option value="terminado">Terminadas</option></select><button class="btn btn-borde" id="recargarEnc" style="padding:12px 18px">Actualizar</button></div>
+      <div style="display:flex;gap:8px"><select id="fEnc"><option value="">Todas</option><option value="nuevo">Nuevas</option><option value="en proceso">En proceso</option><option value="terminado">Terminadas</option></select><button class="btn btn-borde" id="recargarEnc" style="padding:12px 18px">Actualizar</button><button class="btn btn-borrar" id="borrarEnc" style="padding:12px 16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span>Eliminar todo</span></button></div>
     </div>
     <div class="lista" id="encargos"></div>
   </div>
@@ -308,13 +310,20 @@ function pintarEncargos() {
       ${e.idea ? `<p>${esc(e.idea)}</p>` : ""}</div>
     <div class="enc-acc"><select data-est="${esc(e.id)}">${["nuevo", "en proceso", "terminado"].map(x => `<option ${x === e.estado ? "selected" : ""}>${x}</option>`).join("")}</select>
       <a class="btn btn-wa" style="padding:9px 12px;font-size:12px" href="https://wa.me/57${esc(e.celular)}?text=${encodeURIComponent(`¡Hola ${e.nombre}! Te escribimos de Joyería Yireth por tu diseño ${e.id}.`)}" target="_blank">Responder</a>
-      <button data-dele="${esc(e.id)}">Eliminar</button></div></div>`).join("") || `<p class="vacio">Todavía no hay solicitudes.</p>`;
+      <button class="papelera" data-dele="${esc(e.id)}" title="Eliminar" aria-label="Eliminar solicitud"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button></div></div>`).join("") || `<p class="vacio">Todavía no hay solicitudes.</p>`;
 }
 $("#fEnc").onchange = pintarEncargos; $("#recargarEnc").onclick = cargarEncargos;
 $("#encargos").onchange = async e => { const s = e.target.closest("[data-est]"); if (!s) return;
   try { await api("estado-encargo", { id: s.dataset.est, estado: s.value }); encargos.find(x => x.id === s.dataset.est).estado = s.value; globo(); } catch (err) { alert(err.message); } };
-$("#encargos").onclick = async e => { const b = e.target.closest("[data-dele]"); if (!b || !confirm("¿Eliminar esta solicitud y sus fotos?")) return;
-  try { await api("eliminar-encargo", { id: b.dataset.dele }); encargos = encargos.filter(x => x.id !== b.dataset.dele); pintarEncargos(); globo(); } catch (err) { alert(err.message); } };
+async function borrarEncargos(ids) {
+  try { await api("eliminar-encargos", { ids }); encargos = encargos.filter(x => !ids.includes(x.id)); pintarEncargos(); globo(); } catch (err) { alert(err.message); }
+}
+$("#encargos").onclick = e => { const b = e.target.closest("[data-dele]"); if (b && confirm(`¿Eliminar la solicitud ${b.dataset.dele} y sus fotos?`)) borrarEncargos([b.dataset.dele]); };
+$("#borrarEnc").onclick = () => {
+  const f = $("#fEnc").value, v = encargos.filter(e => !f || e.estado === f);
+  if (!v.length) return alert("No hay solicitudes para eliminar.");
+  if (confirm(`¿Eliminar ${v.length === 1 ? "la solicitud" : `las ${v.length} solicitudes`}${f ? ` "${f}"` : ""} y sus fotos? No se puede deshacer.`)) borrarEncargos(v.map(e => e.id));
+};
 
 /* ---------- videos ---------- */
 let videos = [];
@@ -395,10 +404,20 @@ async function cargarPedidos() { try { pedidos = await api("pedidos"); pintarPed
 function pintarPedidos() {
   const f = $("#fEstado").value; const v = pedidos.filter(p => !f || p.estado === f);
   $("#pedidos").innerHTML = v.map(p => `<div class="fila" style="grid-template-columns:1fr auto auto"><div><b style="font-weight:500">${esc(p.id)} · ${esc(p.nombre)}</b><small>${fecha(p.fecha)} · ${pesos(p.total)} · ${METODO[p.metodo] || p.metodo}</small></div>
-    <span class="pill ${esc(p.estado)}">${esc(p.estado)}</span><div class="acc"><button data-ver="${esc(p.id)}">Ver</button></div></div><div class="det" id="det-${esc(p.id)}"></div>`).join("") || `<p class="vacio">Todavía no hay pedidos.</p>`;
+    <span class="pill ${esc(p.estado)}">${esc(p.estado)}</span><div class="acc"><button data-ver="${esc(p.id)}">Ver</button><button class="papelera" data-delp="${esc(p.id)}" title="Eliminar" aria-label="Eliminar pedido"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button></div></div><div class="det" id="det-${esc(p.id)}"></div>`).join("") || `<p class="vacio">Todavía no hay pedidos.</p>`;
 }
 $("#fEstado").onchange = pintarPedidos; $("#recargar").onclick = cargarPedidos;
+async function borrarPedidos(ids) {
+  try { await api("eliminar-pedidos", { ids }); pedidos = pedidos.filter(x => !ids.includes(x.id)); pintarPedidos(); } catch (err) { alert(err.message); }
+}
+$("#borrarPed").onclick = () => {
+  const f = $("#fEstado").value, v = pedidos.filter(p => !f || p.estado === f);
+  if (!v.length) return alert("No hay pedidos para eliminar.");
+  if (confirm(`¿Eliminar ${v.length === 1 ? "el pedido" : `los ${v.length} pedidos`}${f ? ` "${f}"` : ""}? Se borran también los datos de los clientes. No se puede deshacer.`)) borrarPedidos(v.map(p => p.id));
+};
 $("#pedidos").onclick = async e => {
+  const dp = e.target.closest("[data-delp]");
+  if (dp) { if (confirm(`¿Eliminar el pedido ${dp.dataset.delp}? No se puede deshacer.`)) borrarPedidos([dp.dataset.delp]); return; }
   const b = e.target.closest("[data-ver]");
   if (b) { const box = $("#det-" + CSS.escape(b.dataset.ver)); if (box.classList.toggle("ver")) {
     box.innerHTML = "Cargando…"; try { const p = await api("pedido", { id: b.dataset.ver }); const c = p.cliente;
