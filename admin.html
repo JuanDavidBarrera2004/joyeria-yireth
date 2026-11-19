@@ -97,8 +97,8 @@
 
   <div data-vista="productos">
     <div class="barra">
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="filtro" type="search" placeholder="Buscar…"><select id="fCat"><option value="">Todas las categorías</option></select></div>
-      <button class="btn btn-negro" id="nuevo" style="padding:12px 20px">+ Nuevo producto</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="filtro" type="search" placeholder="Buscar…"><select id="fCat"><option value="">Todas las categorías</option></select><select id="fVis"><option value="">Todos</option><option value="vis">Visibles</option><option value="oc">Ocultos</option><option value="pend">Por completar (sin precio)</option></select></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-borde" id="masivo" style="padding:12px 18px">⇪ Subida masiva</button><button class="btn btn-negro" id="nuevo" style="padding:12px 20px">+ Nuevo producto</button></div>
     </div>
     <p id="resumen" style="color:var(--gris);font-size:13px;margin-bottom:10px"></p>
     <div class="lista" id="lista"></div>
@@ -157,6 +157,20 @@
   </div>
 </section>
 
+<dialog id="dlgMas">
+  <form id="fMas">
+    <h2 style="font-size:28px">Subida masiva</h2>
+    <p style="color:var(--gris);font-size:14px;margin:6px 0 16px">Elige la categoría y las fotos. Cada foto se crea como un producto <b>oculto y sin precio</b>. Después entras a cada uno con <b>Editar</b>, le pones nombre, peso y precio, y marcas <b>Visible en la tienda</b>.</p>
+    <div class="g2">
+      <label class="campo">Categoría<select id="mCat"></select></label>
+      <label class="campo">Tipo de oro<select id="mMat"></select></label>
+    </div>
+    <div class="campo">Fotos<input type="file" id="mFotos" accept="image/*" multiple style="padding:10px;border:1px dashed var(--oro);background:#fff"></div>
+    <p class="error" id="eMas" style="color:var(--gris)"></p>
+    <div class="pie-dlg"><button type="button" class="btn btn-borde" id="cMas">Cerrar</button><button class="btn btn-negro" id="bMas">Subir fotos</button></div>
+  </form>
+</dialog>
+
 <dialog id="dlg">
   <form id="fProd">
     <h2 id="dTit" style="font-size:28px">Nuevo producto</h2>
@@ -167,7 +181,7 @@
     </div>
     <div class="campo">Colores disponibles<div class="colores" id="pColores"></div></div>
     <div class="g3">
-      <label class="campo">Precio ($)<input id="pPrecio" type="number" min="0" step="1000" required></label>
+      <label class="campo">Precio ($)<input id="pPrecio" type="number" min="0" step="1000" placeholder="Obligatorio para publicar"></label>
       <label class="campo">Precio antes ($, oferta)<input id="pAntes" type="number" min="0" step="1000" placeholder="Opcional"></label>
       <label class="campo">Unidades (vacío = sin límite)<input id="pStock" type="number" min="0" placeholder="Sin límite"></label>
     </div>
@@ -226,19 +240,22 @@ $$(".tab").forEach(t => t.onclick = () => {
 $("#fCat").innerHTML += CATEGORIAS.map(c => `<option>${c}</option>`).join("");
 $("#pCat").innerHTML = CATEGORIAS.map(c => `<option>${c}</option>`).join("");
 $("#pMat").innerHTML = MATERIALES.map(c => `<option>${c}</option>`).join("");
+$("#mCat").innerHTML = $("#pCat").innerHTML; $("#mMat").innerHTML = $("#pMat").innerHTML;
 $("#pColores").innerHTML = Object.entries(COLORES).map(([c, h]) => `<label><input type="checkbox" value="${c}"><i style="background:${h}"></i>Oro ${c.toLowerCase()}</label>`).join("");
 const mini = p => p.imagenes?.[0] ? `<span class="mini" style="background-image:url('${esc(p.imagenes[0])}')"></span>` : `<span class="mini">${arte(p.categoria)}</span>`;
 function pintar() {
-  const q = $("#filtro").value.toLowerCase(), c = $("#fCat").value;
-  const v = [...lista].sort((a, b) => a.orden - b.orden).filter(p => (!c || p.categoria === c) && (!q || p.nombre.toLowerCase().includes(q)));
-  $("#resumen").textContent = `${lista.length} productos · ${lista.filter(p => p.activo !== false).length} visibles`;
+  const q = $("#filtro").value.toLowerCase(), c = $("#fCat").value, fv = $("#fVis").value;
+  const okVis = p => !fv || (fv === "vis" ? p.activo !== false : fv === "oc" ? p.activo === false : !p.precio);
+  const v = [...lista].sort((a, b) => a.orden - b.orden).filter(p => (!c || p.categoria === c) && okVis(p) && (!q || p.nombre.toLowerCase().includes(q)));
+  const pend = lista.filter(p => !p.precio).length;
+  $("#resumen").textContent = `${lista.length} productos · ${lista.filter(p => p.activo !== false).length} visibles${pend ? ` · ${pend} por completar` : ""}`;
   $("#lista").innerHTML = v.map(p => `<div class="fila${p.activo === false ? " oculto" : ""}">${mini(p)}
-    <div><b style="font-weight:500">${esc(p.nombre)}</b><small>${pesos(p.precio)}${p.precioAntes ? ` (antes ${pesos(p.precioAntes)})` : ""} · ${esc(p.material)}${p.colores?.length ? " · " + p.colores.join(", ").toLowerCase() : ""}${p.stock !== null && p.stock !== undefined ? ` · ${p.stock} und.` : ""}</small>
+    <div><b style="font-weight:500">${esc(p.nombre)}</b><small>${p.precio ? pesos(p.precio) : `<b style="color:#a3392b;font-weight:500">Sin precio</b>`}${p.precioAntes ? ` (antes ${pesos(p.precioAntes)})` : ""} · ${esc(p.material)}${p.colores?.length ? " · " + p.colores.join(", ").toLowerCase() : ""}${p.stock !== null && p.stock !== undefined ? ` · ${p.stock} und.` : ""}</small>
     <div class="marcas">${[["nuevo", "Nuevo"], ["destacado", "Tendencia"], ["top", "★ Top"]].map(([k, t]) => `<button data-marca="${k}" data-id="${esc(p.id)}" class="${p[k] ? "on" : ""}">${p[k] ? "✓ " : ""}${t}</button>`).join("")}</div></div>
-    <span class="pill">${esc(p.categoria)}${p.stock === 0 ? " · agotado" : ""}${p.activo === false ? " · oculto" : ""}</span>
+    <span class="pill">${esc(p.categoria)}${p.stock === 0 ? " · agotado" : ""}${p.activo === false ? (p.precio ? " · oculto" : " · por completar") : ""}</span>
     <div class="acc"><button data-ago="${esc(p.id)}" class="${p.stock === 0 ? "ago-on" : ""}">${p.stock === 0 ? "✓ Hay de nuevo" : "Agotado"}</button><button data-ed="${esc(p.id)}">Editar</button><button data-del="${esc(p.id)}">Eliminar</button></div></div>`).join("") || `<p class="vacio">Aún no hay productos. Pulsa “+ Nuevo producto”.</p>`;
 }
-$("#filtro").oninput = $("#fCat").onchange = pintar;
+$("#filtro").oninput = $("#fCat").onchange = $("#fVis").onchange = pintar;
 function pintarFotos() {
   $("#pFotos").innerHTML = fotos.map((u, i) => `<div class="foto" style="background-image:url('${esc(u)}')">${i ? "" : `<span class="pri">Principal</span>`}<button type="button" data-q="${i}" aria-label="Quitar foto">×</button></div>`).join("") +
     (fotos.length < 8 ? `<label class="subir" for="pArchivo">+ Agregar<br>fotos</label>` : "");
@@ -289,11 +306,34 @@ $("#fProd").onsubmit = async e => {
     precio: +$("#pPrecio").value, precioAntes: +$("#pAntes").value || 0, stock: $("#pStock").value === "" ? null : +$("#pStock").value,
     peso: $("#pPeso").value.trim(), medida: $("#pMedida").value.trim(), orden: +$("#pOrden").value || 100, descripcion: $("#pDesc").value.trim(),
     imagenes: fotos, activo: $("#pActivo").checked, nuevo: $("#pNuevo").checked, destacado: $("#pDest").checked, top: $("#pTop").checked, colores: $$("#pColores input:checked").map(i => i.value) };
-  if (!producto.nombre || !producto.precio) return $("#eProd").textContent = "Escribe el nombre y el precio.";
+  if (!producto.nombre) return $("#eProd").textContent = "Escribe el nombre.";
+  if (!producto.precio && producto.activo) return $("#eProd").textContent = "Para que se vea en la tienda, ponle precio. Si aún no lo tienes, quita “Visible en la tienda”.";
   $("#guardar").disabled = true;
   try { const d = await api("guardar", { producto }); const i = lista.findIndex(p => p.id === d.producto.id); if (i >= 0) lista[i] = d.producto; else lista.push(d.producto); $("#dlg").close(); pintar(); }
   catch (err) { $("#eProd").textContent = err.message; }
   $("#guardar").disabled = false;
+};
+
+/* ---------- subida masiva ---------- */
+const SING = { Cadenas: "Cadena", Pulseras: "Pulsera", Aretes: "Aretes", Anillos: "Anillo", "Dijes y herrajes": "Dije", Tejidas: "Tejida", Matrimonio: "Argollas", "15 años": "Joya 15 años", Piercing: "Piercing", Sets: "Set", Otros: "Joya" };
+$("#masivo").onclick = () => { $("#eMas").textContent = ""; $("#mFotos").value = ""; $("#dlgMas").showModal(); };
+$("#cMas").onclick = () => $("#dlgMas").close();
+$("#fMas").onsubmit = async e => {
+  e.preventDefault();
+  const files = [...$("#mFotos").files], cat = $("#mCat").value, mat = $("#mMat").value;
+  if (!files.length) return $("#eMas").textContent = "Elige al menos una foto.";
+  $("#bMas").disabled = true; let n = lista.filter(p => p.categoria === cat).length, hechos = 0;
+  for (const f of files) {
+    $("#eMas").textContent = `Subiendo ${hechos + 1} de ${files.length}…`;
+    try {
+      const url = (await api("foto", { tipo: "image/jpeg", base64: await reducir(f) })).url;
+      const nombre = `${SING[cat] || cat} ${++n}`;
+      const d = await api("guardar", { producto: { id: crearId(nombre), nombre, categoria: cat, material: mat, precio: 0, imagenes: [url], activo: false, nuevo: true, orden: 100 } });
+      lista.push(d.producto); hechos++;
+    } catch (err) { $("#eMas").textContent = `Error con ${f.name}: ${err.message}`; $("#bMas").disabled = false; pintar(); return; }
+  }
+  $("#eMas").textContent = `Listo: ${hechos} ${hechos === 1 ? "producto creado" : "productos creados"} en ${cat}. Puedes subir otra categoría.`;
+  $("#mFotos").value = ""; $("#bMas").disabled = false; pintar();
 };
 
 /* ---------- encargos (diseños exclusivos) ---------- */
