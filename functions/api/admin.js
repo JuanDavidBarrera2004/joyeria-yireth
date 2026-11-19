@@ -109,12 +109,22 @@ export async function onRequestPost({ env, request }) {
       return json(200, { ok: true });
     }
 
-    case "eliminar-encargo": {
+    case "eliminar-encargos": {
+      const ids = new Set((Array.isArray(d.ids) ? d.ids : []).map(String));
       const lista = (await env.TIENDA.get("encargos", { type: "json" })) || [];
-      const e = lista.find(x => x.id === d.id);
-      if (e) await Promise.all(e.fotos.map(u => env.TIENDA.delete(u.split("id=")[1])));
-      await env.TIENDA.put("encargos", JSON.stringify(lista.filter(x => x.id !== d.id)));
-      return json(200, { ok: true });
+      const fotos = lista.filter(x => ids.has(x.id)).flatMap(x => x.fotos || []);
+      for (let i = 0; i < fotos.length; i += 20) await Promise.all(fotos.slice(i, i + 20).map(u => env.TIENDA.delete(u.split("id=")[1])));
+      await env.TIENDA.put("encargos", JSON.stringify(lista.filter(x => !ids.has(x.id))));
+      return json(200, { ok: true, borrados: lista.length - lista.filter(x => !ids.has(x.id)).length });
+    }
+
+    case "eliminar-pedidos": {
+      const ids = [...new Set((Array.isArray(d.ids) ? d.ids : []).map(String))];
+      const idx = (await env.TIENDA.get("pedidos", { type: "json" })) || [];
+      for (let i = 0; i < ids.length; i += 20) await Promise.all(ids.slice(i, i + 20).map(id => env.TIENDA.delete("pedido:" + id)));
+      const quedan = idx.filter(x => !ids.includes(x.id));
+      await env.TIENDA.put("pedidos", JSON.stringify(quedan));
+      return json(200, { ok: true, borrados: idx.length - quedan.length });
     }
 
     case "ajustes":
