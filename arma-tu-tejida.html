@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Arma tu pulsera tejida con herraje y balines | Joyería Yireth</title>
-<meta name="description" content="Diseña tu pulsera tejida: elige el color del hilo, el herraje (estrella, corazón, trébol, cruz, inicial y más) y los balines en oro amarillo, blanco o rosado.">
+<title>Arma tu pulsera tejida en 3D con herraje y balines | Joyería Yireth</title>
+<meta name="description" content="Diseña tu pulsera tejida en 3D: elige el color del hilo, el herraje, cuántos balines y de qué tamaño a cada lado, en oro amarillo, blanco o rosado.">
 <link rel="canonical" href="https://joyeria-yireth.pages.dev/arma-tu-tejida">
-<meta property="og:type" content="website"><meta property="og:title" content="Arma tu pulsera tejida con herraje y balines | Joyería Yireth"><meta property="og:description" content="Diseña tu pulsera tejida: elige el color del hilo, el herraje (estrella, corazón, trébol, cruz, inicial y más) y los balines en oro amarillo, blanco o rosado.">
+<meta property="og:type" content="website"><meta property="og:title" content="Arma tu pulsera tejida en 3D con herraje y balines | Joyería Yireth"><meta property="og:description" content="Diseña tu pulsera tejida en 3D: elige el color del hilo, el herraje, cuántos balines y de qué tamaño a cada lado, en oro amarillo, blanco o rosado.">
 <meta property="og:image" content="https://joyeria-yireth.pages.dev/img/compartir.png">
 <meta name="robots" content="index,follow">
 <meta property="og:locale" content="es_CO"><meta property="og:site_name" content="Joyería Yireth">
@@ -60,14 +60,27 @@
 </header>
 <main>
 
-<section class="cab-pag"><div class="contenedor"><span class="sup">Pulseras tejidas</span><h1>Arma tu pulsera tejida</h1><p>Elige el color del hilo, el herraje y los balines, y mira cómo se vería antes de pedirla.</p></div></section>
+<section class="cab-pag"><div class="contenedor"><span class="sup">Pulseras tejidas</span><h1>Arma tu pulsera tejida</h1><p>Elige el hilo, el herraje y los balines, y gira la pulsera en 3D para verla desde todos los ángulos.</p></div></section>
 <div class="contenedor simulador" style="padding-bottom:80px">
-  <div class="sim-vista"><svg id="simSvg" viewBox="0 0 800 380" role="img" aria-label="Vista previa de la pulsera"></svg><p class="sim-nota">Vista de referencia: el resultado final puede variar un poco.</p></div>
+  <div class="sim-vista">
+    <div class="sim-lienzo"><canvas id="sim3d" aria-label="Pulsera en 3D"></canvas>
+      <div class="sim-vistas"><button data-vista="girar" title="Girar sola">↻ Girar</button><button data-vista="frente">De frente</button><button data-vista="arriba">Desde arriba</button></div>
+      <p class="sim-ayuda" id="simAyuda">Arrastra para girar · rueda o pellizca para acercar</p>
+    </div>
+    <p class="sim-nota">Vista de referencia en 3D: el tejido, los tamaños y el brillo reales pueden variar un poco.</p>
+  </div>
   <div class="sim-ctrl">
     <div class="sim-grupo"><b>1. Color del hilo <span id="tHilo"></span></b><div class="sim-colores" id="cHilo"></div></div>
-    <div class="sim-grupo"><b>2. Herraje <span id="tHerr"></span></b><div class="sim-herrajes" id="cHerr"></div>
-      <label class="sim-letra" id="cLetra" hidden>Letra <input id="iLetra" maxlength="1" value="A"></label></div>
-    <div class="sim-grupo"><b>3. Balines a cada lado <span id="tBal"></span></b><div class="sim-opc" id="cBal"></div></div>
+    <div class="sim-grupo"><b>2. Herraje <span id="tHerr"></span></b><p class="sim-sub">Son los dijes y herrajes disponibles en la tienda.</p><div class="sim-herrajes" id="cHerr"></div></div>
+    <div class="sim-grupo"><b>3. Balines</b>
+      <div class="sim-opc" id="cTipo" style="margin-bottom:10px"></div>
+      <div class="sim-opc" id="cPreset" style="margin-bottom:12px"></div>
+      <label class="sim-espejo"><input type="checkbox" id="espejo" checked> Igual en los dos lados</label>
+      <div class="sim-lados">
+        <div><span class="sim-lado-t">Lado izquierdo <small>(del centro hacia afuera)</small></span><div class="sim-balines" id="bIzq"></div></div>
+        <div id="colDer"><span class="sim-lado-t">Lado derecho <small>(del centro hacia afuera)</small></span><div class="sim-balines" id="bDer"></div></div>
+      </div>
+    </div>
     <div class="sim-grupo"><b>4. Color del oro <span id="tOro"></span></b><div class="sim-opc" id="cOro"></div></div>
     <div class="sim-resumen" id="simRes"></div>
     <div class="hero-btns"><a class="btn btn-wa" id="simPedir" href="#" target="_blank" rel="noopener">Pedir esta pulsera por WhatsApp</a><a class="btn btn-borde" href="/tienda?cat=tejidas">Ver pulseras tejidas</a></div>
@@ -90,64 +103,67 @@
 </footer>
 <script type="module">
 
-import { iniciar, waUrl, $ } from "/tienda.js";
+import { iniciar, productos, waUrl, esc, $ } from "/tienda.js";
+import { crearVisor } from "/tejida3d.js";
 const aj = await iniciar();
-const HILOS = { Rojo: "#b3202a", Negro: "#232020", "Azul rey": "#2342b0", Verde: "#2f6b3a", Rosado: "#e78fb3", Blanco: "#f2efe8", Café: "#6b4127", Morado: "#5e2f86", Beige: "#d6c09b", Dorado: "#c9a24a" };
-const OROS = { Amarillo: ["#8f6a26", "#f6dd94", "#b8893b"], Rosado: ["#9b5a45", "#f6c9b3", "#c2836a"], Blanco: ["#8d8d8a", "#fbfbf8", "#b9b9b4"] };
-const HERRAJES = {
-  Ninguno: "",
-  Estrella: `<polygon points="0,-38 11,-12 39,-12 16,5 25,32 0,15 -25,32 -16,5 -39,-12 -11,-12" fill="url(#oro)" stroke="url(#oroB)" stroke-width="2"/>`,
-  Corazón: `<path d="M0 34C-30 12-40-2-40-16a19 19 0 0 1 40-6 19 19 0 0 1 40 6c0 14-10 28-40 50z" fill="url(#oro)" stroke="url(#oroB)" stroke-width="2"/>`,
-  Trébol: `<g fill="url(#oro)" stroke="url(#oroB)" stroke-width="2"><circle cx="0" cy="-18" r="16"/><circle cx="18" cy="0" r="16"/><circle cx="0" cy="18" r="16"/><circle cx="-18" cy="0" r="16"/></g><circle r="9" fill="url(#oroB)"/>`,
-  Cruz: `<path d="M-9-38h18v22h20v18h-20v34h-18v-34h-20v-18h20z" fill="url(#oro)" stroke="url(#oroB)" stroke-width="2"/>`,
-  "Estrella de David": `<g fill="none" stroke="url(#oro)" stroke-width="7" stroke-linejoin="round"><polygon points="0,-38 33,19 -33,19"/><polygon points="0,38 33,-19 -33,-19"/></g>`,
-  Corona: `<path d="M-38 22l-4-38 18 16 24-30 24 30 18-16-4 38z" fill="url(#oro)" stroke="url(#oroB)" stroke-width="2"/><rect x="-38" y="22" width="76" height="10" rx="3" fill="url(#oroB)"/><circle cx="0" cy="-30" r="5" fill="#fff" opacity=".9"/>`,
-  Mariposa: `<g fill="url(#oro)" stroke="url(#oroB)" stroke-width="2"><ellipse cx="-19" cy="-12" rx="19" ry="15" transform="rotate(-25 -19 -12)"/><ellipse cx="19" cy="-12" rx="19" ry="15" transform="rotate(25 19 -12)"/><ellipse cx="-14" cy="14" rx="13" ry="11" transform="rotate(25 -14 14)"/><ellipse cx="14" cy="14" rx="13" ry="11" transform="rotate(-25 14 14)"/></g><rect x="-3.5" y="-22" width="7" height="44" rx="3.5" fill="url(#oroB)"/>`,
-  "Ojo turco": `<circle r="34" fill="url(#oro)"/><circle r="27" fill="#1f4fbf"/><circle r="18" fill="#fff"/><circle r="11" fill="#7cc4f0"/><circle r="6" fill="#111"/>`,
-  Inicial: `<circle r="34" fill="url(#oro)" stroke="url(#oroB)" stroke-width="3"/><circle r="27" fill="none" stroke="url(#oroB)" stroke-width="1.5"/><text y="12" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="38" font-weight="600" fill="url(#oroB)">__L__</text>`,
-};
-const est = { hilo: "Rojo", herr: "Estrella", bal: 2, oro: "Amarillo", letra: "A" };
-const mezcla = (h, f) => { const n = parseInt(h.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.max(0, Math.min(255, Math.round(f > 0 ? v + (255 - v) * f : v * (1 + f))))); return "#" + c.map(v => v.toString(16).padStart(2, "0")).join(""); };
-function dibujar() {
-  const h = HILOS[est.hilo], cl = mezcla(h, .28), os = mezcla(h, -.32), o = OROS[est.oro];
-  const y = 200, alto = 34, x0 = 120, x1 = 680, w = 20;
-  let trenza = "";
-  for (let x = x0; x < x1; x += w) {
-    trenza += `<polygon points="${x},${y - alto / 2} ${x + w / 2},${y - alto / 2} ${x + w},${y} ${x + w / 2},${y}" fill="${cl}" stroke="${os}" stroke-width=".8"/>`;
-    trenza += `<polygon points="${x},${y + alto / 2} ${x + w / 2},${y + alto / 2} ${x + w},${y} ${x + w / 2},${y}" fill="${h}" stroke="${os}" stroke-width=".8"/>`;
+const HILOS = { Negro: "#1d1b1b", Rojo: "#b3202a", "Azul rey": "#2342b0", "Azul oscuro": "#1c2a4f", Verde: "#2f6b3a", Rosado: "#e78fb3", Blanco: "#efece5", Café: "#5e3a22", Morado: "#5e2f86", Beige: "#cdb48c", Dorado: "#c9a24a" };
+const OROS = { Amarillo: "#f4c96a", Rosado: "#efab8f", Blanco: "#e6e6e3" };
+const TAM = [4, 5, 6, 8, 10];
+const PRESETS = { "Clásica (4 balines)": [[8, 6], [8, 6]], "Escalonada": [[10, 8, 6], [10, 8, 6]], "Sencilla": [[6], [6]], "Sin balines": [[], []] };
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+const est = { hilo: "Negro", oro: "Amarillo", liso: false, espejo: true, izq: [8, 6], der: [8, 6], herraje: null };
+const herrajes = (await productos()).filter(p => p.categoria === "Dijes y herrajes" && p.imagenes?.length);
+
+let visor = null;
+try { visor = crearVisor($("#sim3d"), () => $("#simAyuda").classList.add("oculta")); } catch (e) { console.error(e); }
+if (!visor) $(".sim-lienzo").innerHTML = `<p class="vacio" style="padding:60px 20px">Tu navegador no puede mostrar la vista 3D. Igual puedes elegir todo y pedir tu pulsera por WhatsApp.</p>`;
+document.querySelector(".sim-vistas")?.addEventListener("click", e => { const b = e.target.closest("[data-vista]"); if (b) visor?.vista(b.dataset.vista); });
+
+const listaTxt = l => l.length ? l.map(d => d + " mm").join(", ") : "sin balines";
+function pintarBalines() {
+  if (est.espejo) est.der = [...est.izq];
+  for (const [lado, cont] of [["izq", "#bIzq"], ["der", "#bDer"]]) {
+    const l = est[lado], bloq = lado === "der" && est.espejo;
+    $(cont).innerHTML = l.map((d, i) => `<span class="balin-chip"><select data-lado="${lado}" data-i="${i}" ${bloq ? "disabled" : ""} aria-label="Tamaño del balín ${i + 1}">${TAM.map(t => `<option value="${t}" ${t === d ? "selected" : ""}>${t} mm</option>`).join("")}</select>${bloq ? "" : `<button data-quitar="${lado}" data-i="${i}" aria-label="Quitar balín">×</button>`}</span>`).join("") +
+      (bloq ? "" : l.length < 6 ? `<button class="balin-mas" data-mas="${lado}">+ Balín</button>` : "") + (l.length ? "" : `<em class="sim-vacio">Sin balines</em>`);
   }
-  const cola = lado => { const sx = lado < 0 ? x0 : x1, d = lado;
-    return `<path d="M${sx} ${y - 6}c${d * 40} -4 ${d * 62} 20 ${d * 70} 62" stroke="${h}" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <path d="M${sx} ${y + 6}c${d * 30} 6 ${d * 44} 30 ${d * 46} 74" stroke="${os}" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <circle cx="${sx + d * 70}" cy="${y + 58}" r="7" fill="url(#bal)"/><circle cx="${sx + d * 46}" cy="${y + 82}" r="7" fill="url(#bal)"/>`; };
-  const nudo = `<rect x="${x0 - 22}" y="${y - alto / 2 - 4}" width="26" height="${alto + 8}" rx="6" fill="${os}"/>${[0, 1, 2].map(i => `<line x1="${x0 - 18 + i * 8}" y1="${y - alto / 2 - 2}" x2="${x0 - 18 + i * 8}" y2="${y + alto / 2 + 2}" stroke="${cl}" stroke-width="2"/>`).join("")}
-    <rect x="${x1 - 4}" y="${y - alto / 2 - 4}" width="26" height="${alto + 8}" rx="6" fill="${os}"/>${[0, 1, 2].map(i => `<line x1="${x1 + 2 + i * 8}" y1="${y - alto / 2 - 2}" x2="${x1 + 2 + i * 8}" y2="${y + alto / 2 + 2}" stroke="${cl}" stroke-width="2"/>`).join("")}`;
-  const hay = est.herr !== "Ninguno", sep = hay ? 62 : 14, paso = 30;
-  let bal = "";
-  for (let i = 0; i < est.bal; i++) for (const d of [-1, 1]) bal += `<circle cx="${400 + d * (sep + i * paso)}" cy="${y}" r="12" fill="url(#bal)"/><ellipse cx="${400 + d * (sep + i * paso) - 4}" cy="${y - 5}" rx="4" ry="2.5" fill="#fff" opacity=".55"/>`;
-  const herr = hay ? `<g transform="translate(400 ${y})"><circle cx="-44" cy="0" r="6" fill="none" stroke="url(#oroB)" stroke-width="3"/><circle cx="44" cy="0" r="6" fill="none" stroke="url(#oroB)" stroke-width="3"/>${HERRAJES[est.herr].replace("__L__", (est.letra || "A").toUpperCase())}</g>` : "";
-  $("#simSvg").innerHTML = `<defs>
-      <linearGradient id="oro" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${o[0]}"/><stop offset=".45" stop-color="${o[1]}"/><stop offset="1" stop-color="${o[2]}"/></linearGradient>
-      <linearGradient id="oroB" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${o[0]}"/><stop offset="1" stop-color="${o[2]}"/></linearGradient>
-      <radialGradient id="bal" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="${o[1]}"/><stop offset=".55" stop-color="${o[2]}"/><stop offset="1" stop-color="${o[0]}"/></radialGradient>
-      <filter id="sombra" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-opacity=".22"/></filter></defs>
-    <rect width="800" height="380" fill="#f6f1ea"/>
-    <g filter="url(#sombra)">${cola(-1)}${cola(1)}${trenza}${nudo}${bal}${herr}</g>`;
-  $("#tHilo").textContent = est.hilo; $("#tHerr").textContent = est.herr === "Inicial" ? "Inicial " + (est.letra || "A").toUpperCase() : est.herr;
-  $("#tBal").textContent = est.bal ? est.bal + " (" + est.bal * 2 + " en total)" : "Sin balines"; $("#tOro").textContent = "Oro " + est.oro.toLowerCase();
-  $("#cLetra").hidden = est.herr !== "Inicial";
-  const res = `Pulsera tejida en hilo ${est.hilo.toLowerCase()}, ${est.herr === "Ninguno" ? "sin herraje" : "herraje " + (est.herr === "Inicial" ? "inicial " + (est.letra || "A").toUpperCase() : est.herr.toLowerCase())}, ${est.bal ? est.bal * 2 + " balines" : "sin balines"}, oro ${est.oro.toLowerCase()}.`;
+  $("#colDer").classList.toggle("bloqueado", est.espejo);
+}
+function dibujar() {
+  const res = `Pulsera tejida en hilo ${est.hilo.toLowerCase()}, ${est.herraje ? "herraje “" + est.herraje.nombre + "”" : "sin herraje"}, balines ${est.liso ? "lisos" : "diamantados"} en oro ${est.oro.toLowerCase()}: lado izquierdo ${listaTxt(est.izq)}; lado derecho ${listaTxt(est.der)}.`;
   $("#simRes").textContent = res;
-  $("#simPedir").href = waUrl(aj.whatsapp, "¡Hola Joyería Yireth! Armé esta pulsera en la página y quiero pedirla: " + res + " ¿Qué precio tiene?");
+  $("#tHilo").textContent = est.hilo; $("#tOro").textContent = "Oro " + est.oro.toLowerCase(); $("#tHerr").textContent = est.herraje ? est.herraje.nombre : "Sin herraje";
+  $("#simPedir").href = waUrl(aj.whatsapp, "¡Hola Joyería Yireth! Armé esta pulsera en la página y quiero pedirla: " + res + (est.herraje ? " (herraje: " + location.origin + "/producto/" + est.herraje.id + ")" : "") + " ¿Qué precio tiene?");
   document.querySelectorAll("[data-k]").forEach(b => b.classList.toggle("sel", String(est[b.dataset.k]) === b.dataset.v));
+  document.querySelectorAll("[data-herr]").forEach(b => b.classList.toggle("sel", (est.herraje?.id || "") === b.dataset.herr));
+  visor?.actualizar({ izq: est.izq, der: est.der, liso: est.liso, herraje: est.herraje, colorOro: hexRgb(OROS[est.oro]), colorHilo: hexRgb(HILOS[est.hilo]) });
 }
 $("#cHilo").innerHTML = Object.entries(HILOS).map(([n, c]) => `<button data-k="hilo" data-v="${n}" title="${n}" aria-label="Hilo ${n}" style="background:${c}"></button>`).join("");
-$("#cHerr").innerHTML = Object.keys(HERRAJES).map(n => `<button data-k="herr" data-v="${n}"><svg viewBox="-45 -45 90 90"><defs><linearGradient id="m${n.length}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8f6a26"/><stop offset=".5" stop-color="#f6dd94"/><stop offset="1" stop-color="#b8893b"/></linearGradient></defs>${n === "Ninguno" ? `<line x1="-26" y1="26" x2="26" y2="-26" stroke="#b9b0a4" stroke-width="5"/>` : HERRAJES[n].replace(/url\(#oroB?\)/g, `url(#m${n.length})`).replace("__L__", "A")}</svg><span>${n}</span></button>`).join("");
-$("#cBal").innerHTML = [0, 1, 2, 3, 4].map(n => `<button data-k="bal" data-v="${n}">${n}</button>`).join("");
-$("#cOro").innerHTML = Object.entries(OROS).map(([n, c]) => `<button data-k="oro" data-v="${n}"><i style="background:linear-gradient(135deg,${c[0]},${c[1]},${c[2]})"></i>${n}</button>`).join("");
-document.querySelector(".sim-ctrl").onclick = e => { const b = e.target.closest("[data-k]"); if (!b) return; est[b.dataset.k] = b.dataset.k === "bal" ? +b.dataset.v : b.dataset.v; dibujar(); };
-$("#iLetra").oninput = () => { est.letra = $("#iLetra").value.replace(/[^a-zA-ZñÑ]/g, "").slice(0, 1) || "A"; dibujar(); };
-dibujar();
+$("#cOro").innerHTML = Object.entries(OROS).map(([n, c]) => `<button data-k="oro" data-v="${n}"><i style="background:${c}"></i>${n}</button>`).join("");
+$("#cTipo").innerHTML = `<button data-k="liso" data-v="false">✦ Diamantados</button><button data-k="liso" data-v="true">● Lisos</button>`;
+$("#cPreset").innerHTML = Object.keys(PRESETS).map(n => `<button data-preset="${n}" class="preset">${n}</button>`).join("");
+$("#cHerr").innerHTML = `<button data-herr=""><span class="sin">∅</span><span>Sin herraje</span></button>` +
+  herrajes.map(p => `<button data-herr="${esc(p.id)}" title="${esc(p.nombre)}"><img src="${esc(p.imagenes[0])}" alt="" loading="lazy"><span>${esc(p.nombre.replace(/^(Dije|Dijes|Herraje)\s+/i, ""))}</span></button>`).join("");
+if (!herrajes.length) $("#cHerr").insertAdjacentHTML("beforeend", `<p class="sim-sub">Pronto verás aquí los herrajes de la tienda.</p>`);
+
+document.querySelector(".sim-ctrl").addEventListener("click", e => {
+  const k = e.target.closest("[data-k]"), h = e.target.closest("[data-herr]"), pr = e.target.closest("[data-preset]"), q = e.target.closest("[data-quitar]"), m = e.target.closest("[data-mas]");
+  if (k) est[k.dataset.k] = k.dataset.k === "liso" ? k.dataset.v === "true" : k.dataset.v;
+  else if (h) { const p = herrajes.find(x => x.id === h.dataset.herr); est.herraje = p ? { id: p.id, nombre: p.nombre, foto: p.imagenes[0] } : null; }
+  else if (pr) { const [a, b] = PRESETS[pr.dataset.preset]; est.izq = [...a]; est.der = [...b]; }
+  else if (q) { est[q.dataset.quitar].splice(+q.dataset.i, 1); }
+  else if (m) { const l = est[m.dataset.mas]; l.push(l.length ? Math.max(4, TAM[Math.max(0, TAM.indexOf(l[l.length - 1]) - 1)]) : 6); }
+  else return;
+  pintarBalines(); dibujar();
+});
+document.querySelector(".sim-ctrl").addEventListener("change", e => {
+  const s = e.target.closest("select[data-lado]");
+  if (s) est[s.dataset.lado][+s.dataset.i] = +s.value;
+  else if (e.target.id === "espejo") est.espejo = e.target.checked;
+  else return;
+  pintarBalines(); dibujar();
+});
+pintarBalines(); dibujar();
 
 </script>
 </body>
