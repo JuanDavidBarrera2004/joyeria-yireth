@@ -208,7 +208,7 @@ pintarRejilla(document.getElementById("gNuevas"), (nuevas.length ? nuevas : l).s
 pintarRejilla(document.getElementById("gTendencia"), (tend.length ? tend : l).slice(0, 8));
 const top = l.filter(p => p.top);
 if (top.length) { document.getElementById("secTop").hidden = false; pintarRejilla(document.getElementById("gTop"), top.slice(0, 8)); }
-pintarRejilla(document.getElementById("gEconomicas"), l.filter(p => p.precio < 500000).sort((a,b)=>a.precio-b.precio).slice(0, 4));
+pintarRejilla(document.getElementById("gEconomicas"), l.filter(p => p.precio && p.precio < 500000).sort((a,b)=>a.precio-b.precio).slice(0, 4));
 
 </script>
 </body>

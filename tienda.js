@@ -62,11 +62,11 @@ export function tarjeta(p) {
   const meta = [p.material, p.peso, p.medida].filter(Boolean).join(" · ");
   return `<article class="prod rev" data-id="${esc(p.id)}">
     <div class="prod-media"><a class="prod-foto" href="/producto/${esc(p.id)}">${etq}${fotos}</a>
-    ${agotado ? "" : `<button class="add-rapido" data-add>Agregar al carrito</button>`}</div>
+    ${agotado ? "" : p.precio ? `<button class="add-rapido" data-add>Agregar al carrito</button>` : `<a class="add-rapido" href="/producto/${esc(p.id)}">Ver y consultar precio</a>`}</div>
     <div class="prod-info">
       <h3><a href="/producto/${esc(p.id)}">${esc(p.nombre)}</a></h3>
       <div class="meta">${esc(meta)}${puntos(p.colores)}</div>
-      <div class="precio">${p.precioAntes ? `<span class="rojo">${pesos(p.precio)}</span><s>${pesos(p.precioAntes)}</s>` : pesos(p.precio)}</div>
+      <div class="precio">${!p.precio ? `<span class="consultar">Consulta el precio</span>` : p.precioAntes ? `<span class="rojo">${pesos(p.precio)}</span><s>${pesos(p.precioAntes)}</s>` : pesos(p.precio)}</div>
       ${p.precio >= 50000 ? `<div class="cuotas">Paga a cuotas con Addi</div>` : ""}
     </div>
   </article>`;

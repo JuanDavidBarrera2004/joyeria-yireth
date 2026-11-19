@@ -102,11 +102,11 @@ function chips() {
     Object.entries(MARCAS).filter(([k, [, f]]) => k === ver || l.some(f)).map(([k, [t]]) => `<button class="chip${ver === k ? " activo" : ""}" data-ver="${k}">${t}</button>`).join("");
 }
 function pintar() {
-  let r = l.filter(p => (!cat || p.categoria === cat) && (!ver || MARCAS[ver][1](p)) && (!max || p.precio <= max) &&
+  let r = l.filter(p => (!cat || p.categoria === cat) && (!ver || MARCAS[ver][1](p)) && (!max || (p.precio && p.precio <= max)) &&
     (!$("#material").value || p.material === $("#material").value) && (!$("#color").value || (p.colores || []).includes($("#color").value)) &&
     (!q || (p.nombre + " " + p.categoria + " " + p.material + " " + (p.descripcion||"")).toLowerCase().includes(q.toLowerCase())));
   const o = $("#orden").value;
-  if (o === "menor") r.sort((a, b) => a.precio - b.precio); else if (o === "mayor") r.sort((a, b) => b.precio - a.precio); else if (o === "nuevo") r.sort((a, b) => (b.nuevo|0) - (a.nuevo|0));
+  if (o === "menor") r.sort((a, b) => (a.precio || 1e12) - (b.precio || 1e12)); else if (o === "mayor") r.sort((a, b) => b.precio - a.precio); else if (o === "nuevo") r.sort((a, b) => (b.nuevo|0) - (a.nuevo|0));
   $("#titulo").textContent = q ? `Resultados para “${q}”` : ver ? MARCAS[ver][0] : max ? `Joyas por menos de $${max.toLocaleString("es-CO")}` : cat || "Toda la joyería";
   document.title = ($("#titulo").textContent) + " | Joyería Yireth";
   $("#conteo").textContent = r.length + (r.length === 1 ? " joya" : " joyas");

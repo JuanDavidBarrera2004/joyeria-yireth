@@ -97,11 +97,11 @@ if (!p) {
     <div class="ficha-info">
       <span class="sup">${esc(p.material)}</span>
       <h1>${esc(p.nombre)}</h1>
-      <div class="precio">${p.precioAntes ? `<span class="rojo">${pesos(p.precio)}</span><s>${pesos(p.precioAntes)}</s>` : pesos(p.precio)}</div>
+      <div class="precio">${!p.precio ? `<span class="consultar" style="font-size:20px">Consulta el precio por WhatsApp</span>` : p.precioAntes ? `<span class="rojo">${pesos(p.precio)}</span><s>${pesos(p.precioAntes)}</s>` : pesos(p.precio)}</div>
       ${p.precio >= 50000 && aj.pagos?.addi ? `<div class="caja-addi">${aj.pagos.addi && !VISTA_PREVIA ? `<addi-widget price="${p.precio}" ally-slug="${esc(aj.pagos.addi)}"></addi-widget>` : `<b>Paga a cuotas con Addi.</b> Elige Addi al finalizar tu compra. Sujeto a aprobación.`}</div>` : ""}
       <ul class="specs">${specs.map(([a, b]) => `<li><span>${a}</span><b style="font-weight:500">${esc(b)}</b></li>`).join("")}</ul>
       ${p.descripcion ? `<p class="desc">${esc(p.descripcion)}</p>` : ""}
-      ${agotado ? `<a class="btn btn-wa" style="width:100%" href="${waUrl(aj.whatsapp, `¡Hola! Me interesa "${p.nombre}", ¿lo vuelven a tener?`)}" target="_blank" rel="noopener">Preguntar disponibilidad</a>` : `
+      ${agotado ? `<a class="btn btn-wa" style="width:100%" href="${waUrl(aj.whatsapp, `¡Hola! Me interesa "${p.nombre}", ¿lo vuelven a tener?`)}" target="_blank" rel="noopener">Preguntar disponibilidad</a>` : !p.precio ? `<a class="btn btn-wa" style="width:100%" href="${waUrl(aj.whatsapp, `¡Hola! Me interesa "${p.nombre}", ¿qué precio tiene? (${location.href})`)}" target="_blank" rel="noopener">Consultar precio por WhatsApp</a>` : `
       <div class="comprar">
         <span class="cant"><button id="menos" aria-label="Menos">−</button><span id="n">1</span><button id="mas" aria-label="Más">+</button></span>
         <button class="btn btn-negro" id="agregar">Agregar al carrito</button>
@@ -117,7 +117,7 @@ if (!p) {
   if (aj.pagos?.addi && !VISTA_PREVIA && p.precio >= 50000) { const s = document.createElement("script"); s.src = "https://s3.amazonaws.com/widgets.addi.com/bundle.min.js"; document.body.append(s); }
   $$(".miniaturas button").forEach(b => b.onclick = () => { $$(".miniaturas button").forEach(x => x.classList.toggle("sel", x === b)); $("#gPri").innerHTML = `<img src="${esc(imgs[+b.dataset.i])}" alt="${esc(p.nombre)}">`; });
   let n = 1; const pn = () => $("#n").textContent = n;
-  if (!agotado) {
+  if (!agotado && p.precio) {
     $("#menos").onclick = () => { n = Math.max(1, n - 1); pn(); };
     $("#mas").onclick = () => { n = Math.min(p.stock || 20, n + 1); pn(); };
     $("#agregar").onclick = () => Carrito.agregar(p, n);
