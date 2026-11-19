@@ -89,26 +89,28 @@ import { iniciar, productos, pintarRejilla, CATEGORIAS, slug, $ } from "/tienda.
 iniciar();
 const l = await productos();
 const P = new URLSearchParams(location.search);
-let cat = CATEGORIAS.find(c => slug(c) === P.get("cat")) || "", q = P.get("q") || "", oferta = P.get("oferta") === "1", max = +P.get("max") || 0;
+const MARCAS = { oferta: ["Ofertas", p => p.precioAntes], nuevo: ["Nuevos", p => p.nuevo], tendencia: ["Tendencia", p => p.destacado], top: ["★ Top ventas", p => p.top] };
+let cat = CATEGORIAS.find(c => slug(c) === P.get("cat")) || "", q = P.get("q") || "", max = +P.get("max") || 0;
+let ver = P.get("oferta") === "1" ? "oferta" : MARCAS[P.get("ver")] ? P.get("ver") : "";
 $("#orden").value = P.get("orden") || "";
 const cats = CATEGORIAS.filter(c => l.some(p => p.categoria === c));
 function chips() {
-  $("#chips").innerHTML = [["", "Todas"], ...cats.map(c => [c, c])].map(([v, t]) => `<button class="chip${v === cat && !oferta ? " activo" : ""}" data-c="${v}">${t}</button>`).join("") +
-    `<button class="chip${oferta ? " activo" : ""}" data-oferta>Ofertas</button>`;
+  $("#chips").innerHTML = [["", "Todas"], ...cats.map(c => [c, c])].map(([v, t]) => `<button class="chip${v === cat && !ver ? " activo" : ""}" data-c="${v}">${t}</button>`).join("") +
+    Object.entries(MARCAS).filter(([k, [, f]]) => k === ver || l.some(f)).map(([k, [t]]) => `<button class="chip${ver === k ? " activo" : ""}" data-ver="${k}">${t}</button>`).join("");
 }
 function pintar() {
-  let r = l.filter(p => (!cat || p.categoria === cat) && (!oferta || p.precioAntes) && (!max || p.precio <= max) &&
+  let r = l.filter(p => (!cat || p.categoria === cat) && (!ver || MARCAS[ver][1](p)) && (!max || p.precio <= max) &&
     (!$("#material").value || p.material === $("#material").value) &&
     (!q || (p.nombre + " " + p.categoria + " " + p.material + " " + (p.descripcion||"")).toLowerCase().includes(q.toLowerCase())));
   const o = $("#orden").value;
   if (o === "menor") r.sort((a, b) => a.precio - b.precio); else if (o === "mayor") r.sort((a, b) => b.precio - a.precio); else if (o === "nuevo") r.sort((a, b) => (b.nuevo|0) - (a.nuevo|0));
-  $("#titulo").textContent = q ? `Resultados para “${q}”` : oferta ? "Ofertas" : max ? `Joyas por menos de $${max.toLocaleString("es-CO")}` : cat || "Toda la joyería";
+  $("#titulo").textContent = q ? `Resultados para “${q}”` : ver ? MARCAS[ver][0] : max ? `Joyas por menos de $${max.toLocaleString("es-CO")}` : cat || "Toda la joyería";
   document.title = ($("#titulo").textContent) + " | Joyería Yireth";
   $("#conteo").textContent = r.length + (r.length === 1 ? " joya" : " joyas");
   pintarRejilla($("#grilla"), r, q ? "No encontramos joyas con esa búsqueda. Escríbenos por WhatsApp y te ayudamos." : "Pronto nuevas joyas en esta categoría.");
 }
-$("#chips").onclick = e => { const b = e.target.closest(".chip"); if (!b) return; oferta = b.hasAttribute("data-oferta"); cat = oferta ? "" : b.dataset.c; q = ""; max = 0;
-  history.replaceState(null, "", "/tienda" + (oferta ? "?oferta=1" : cat ? "?cat=" + slug(cat) : "")); chips(); pintar(); };
+$("#chips").onclick = e => { const b = e.target.closest(".chip"); if (!b) return; ver = b.dataset.ver || ""; cat = ver ? "" : b.dataset.c; q = ""; max = 0;
+  history.replaceState(null, "", "/tienda" + (ver ? "?ver=" + ver : cat ? "?cat=" + slug(cat) : "")); chips(); pintar(); };
 $("#material").onchange = $("#orden").onchange = pintar;
 chips(); pintar();
 

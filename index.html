@@ -87,7 +87,7 @@
 
 <section class="sec" style="padding-top:50px">
   <div class="contenedor">
-    <div class="sec-cab"><div><span class="sup">Recién llegadas</span><h2>Joyas nuevas</h2></div><a class="ver-mas" href="/tienda?orden=nuevo">Ver todas</a></div>
+    <div class="sec-cab"><div><span class="sup">Recién llegadas</span><h2>Joyas nuevas</h2></div><a class="ver-mas" href="/tienda?ver=nuevo">Ver todas</a></div>
     <div class="rejilla" id="gNuevas"></div>
   </div>
 </section>
@@ -107,7 +107,7 @@
 
 <section class="sec">
   <div class="contenedor">
-    <div class="sec-cab"><div><span class="sup">Lo más pedido</span><h2>En tendencia</h2></div><a class="ver-mas" href="/tienda">Ver toda la joyería</a></div>
+    <div class="sec-cab"><div><span class="sup">Lo más pedido</span><h2>En tendencia</h2></div><a class="ver-mas" href="/tienda?ver=tendencia">Ver todas</a></div>
     <div class="rejilla" id="gTendencia"></div>
   </div>
 </section>
@@ -122,6 +122,13 @@
       <svg class="fondo" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width=".9"><path d="M12 44l4-22 10 10 6-14 6 14 10-10 4 22z"/><path d="M12 50h40"/><circle cx="32" cy="16" r="2"/></svg>
       <div><span class="sup">Una fecha inolvidable</span><h3>Joyas para 15 años</h3><p>Sets, cadenas y dijes para regalar en su celebración.</p><span class="btn btn-borde">Ver colección</span></div>
     </a>
+  </div>
+</section>
+
+<section class="sec" style="padding-top:0" id="secTop" hidden>
+  <div class="contenedor">
+    <div class="sec-cab"><div><span class="sup">Las favoritas de nuestras clientas</span><h2>Top ventas</h2></div><a class="ver-mas" href="/tienda?ver=top">Ver todas</a></div>
+    <div class="rejilla" id="gTop"></div>
   </div>
 </section>
 
@@ -183,6 +190,8 @@ const l = await productos();
 const nuevas = l.filter(p => p.nuevo); const tend = l.filter(p => p.destacado);
 pintarRejilla(document.getElementById("gNuevas"), (nuevas.length ? nuevas : l).slice(0, 8));
 pintarRejilla(document.getElementById("gTendencia"), (tend.length ? tend : l).slice(0, 8));
+const top = l.filter(p => p.top);
+if (top.length) { document.getElementById("secTop").hidden = false; pintarRejilla(document.getElementById("gTop"), top.slice(0, 8)); }
 pintarRejilla(document.getElementById("gEconomicas"), l.filter(p => p.precio < 500000).sort((a,b)=>a.precio-b.precio).slice(0, 4));
 
 </script>

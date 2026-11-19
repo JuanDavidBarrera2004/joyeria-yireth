@@ -52,7 +52,8 @@ export const arte = cat => ARTE[ARTE_CAT[cat] || "dije"];
 /* ---------- tarjeta de producto ---------- */
 export function tarjeta(p) {
   const agotado = p.stock === 0;
-  const etq = agotado ? `<span class="etq agotado">Agotado</span>` : p.precioAntes ? `<span class="etq oferta">Oferta</span>` : p.nuevo ? `<span class="etq">Nuevo</span>` : "";
+  const marcas = [agotado && ["agotado", "Agotado"], !agotado && p.precioAntes && ["oferta", "Oferta"], p.top && ["top", "★ Top"], p.destacado && ["tendencia", "Tendencia"], p.nuevo && ["", "Nuevo"]].filter(Boolean).slice(0, 2);
+  const etq = marcas.length ? `<div class="etqs">${marcas.map(([c, t]) => `<span class="etq ${c}">${t}</span>`).join("")}</div>` : "";
   const fotos = p.imagenes?.length
     ? `<img class="pri" src="${esc(p.imagenes[0])}" alt="${esc(p.nombre)}" loading="lazy">${p.imagenes[1] ? `<img class="seg" src="${esc(p.imagenes[1])}" alt="" loading="lazy">` : ""}`
     : `<div class="arte">${arte(p.categoria)}</div>`;

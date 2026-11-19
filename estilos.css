@@ -118,6 +118,8 @@ h1,h2,h3{font-family:var(--f-tit);font-weight:500;line-height:1.08;letter-spacin
 .prod-foto .arte svg{width:46%;height:46%;color:var(--oro)}
 .etq{position:absolute;top:10px;left:10px;z-index:2;font:500 10.5px var(--f-txt);letter-spacing:.14em;text-transform:uppercase;padding:5px 9px;background:var(--tinta);color:var(--marfil)}
 .etq.oferta{background:#a3392b}.etq.agotado{background:var(--tenue)}
+.etqs{position:absolute;top:10px;left:10px;z-index:2;display:flex;flex-direction:column;align-items:flex-start;gap:5px}.etqs .etq{position:static}
+.etq.top{background:linear-gradient(135deg,#b8893b,#d9b36a);color:#1d1410}.etq.tendencia{background:#fff;color:var(--tinta);border:1px solid var(--linea)}
 .add-rapido{position:absolute;left:10px;right:10px;bottom:10px;z-index:2;background:var(--tinta);color:var(--marfil);padding:12px;font:500 12px var(--f-txt);letter-spacing:.14em;text-transform:uppercase;transform:translateY(130%);transition:transform .3s}
 .prod:hover .add-rapido{transform:none}
 @media(hover:none){.add-rapido{display:none}}

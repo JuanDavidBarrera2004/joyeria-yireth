@@ -25,6 +25,8 @@
   .fila .mini{width:64px;height:64px;background:var(--marfil) center/cover;border:1px solid var(--linea);display:grid;place-items:center}
   .fila .mini svg{width:30px;color:var(--oro)}
   .fila small{display:block;color:var(--gris)}
+  .marcas{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}.marcas button{font-size:11.5px;padding:4px 10px;border:1px solid var(--linea);background:#fff;color:var(--gris)}
+  .marcas button.on{background:var(--tinta);color:var(--marfil);border-color:var(--tinta)}.marcas button[data-marca=top].on{background:linear-gradient(135deg,#b8893b,#d9b36a);color:#1d1410;border-color:#b8893b}
   .pill{font-size:11.5px;padding:4px 10px;background:var(--crema);white-space:nowrap}
   .pill.pagado{background:#dff3e4;color:#1d6b35}.pill.pendiente{background:#fff3d6;color:#8a6a2f}.pill.rechazado,.pill.cancelado{background:#f8e1dd;color:#a3392b}.pill.enviado,.pill.entregado{background:#e3ecf8;color:#2d4f80}
   .acc{display:flex;gap:6px}.acc button{padding:8px 12px;border:1px solid var(--linea);background:#fff;font-size:13px}
@@ -144,8 +146,9 @@
     </div>
     <div class="checks">
       <label><input type="checkbox" id="pActivo" checked> Visible en la tienda</label>
-      <label><input type="checkbox" id="pNuevo"> Joya nueva</label>
-      <label><input type="checkbox" id="pDest"> En tendencia (inicio)</label>
+      <label><input type="checkbox" id="pNuevo"> Nuevo</label>
+      <label><input type="checkbox" id="pDest"> Tendencia</label>
+      <label><input type="checkbox" id="pTop"> ★ Top ventas</label>
     </div>
     <p class="error" id="eProd"></p>
     <div class="pie-dlg"><button type="button" class="btn btn-borde" id="cancelar">Cancelar</button><button class="btn btn-negro" id="guardar">Guardar</button></div>
@@ -189,8 +192,9 @@ function pintar() {
   const v = [...lista].sort((a, b) => a.orden - b.orden).filter(p => (!c || p.categoria === c) && (!q || p.nombre.toLowerCase().includes(q)));
   $("#resumen").textContent = `${lista.length} productos · ${lista.filter(p => p.activo !== false).length} visibles`;
   $("#lista").innerHTML = v.map(p => `<div class="fila${p.activo === false ? " oculto" : ""}">${mini(p)}
-    <div><b style="font-weight:500">${esc(p.nombre)}</b><small>${pesos(p.precio)}${p.precioAntes ? ` (antes ${pesos(p.precioAntes)})` : ""} · ${esc(p.material)}${p.stock !== null && p.stock !== undefined ? ` · ${p.stock} und.` : ""}</small></div>
-    <span class="pill">${esc(p.categoria)}${p.nuevo ? " · nueva" : ""}${p.destacado ? " · tendencia" : ""}${p.stock === 0 ? " · agotado" : ""}${p.activo === false ? " · oculto" : ""}</span>
+    <div><b style="font-weight:500">${esc(p.nombre)}</b><small>${pesos(p.precio)}${p.precioAntes ? ` (antes ${pesos(p.precioAntes)})` : ""} · ${esc(p.material)}${p.stock !== null && p.stock !== undefined ? ` · ${p.stock} und.` : ""}</small>
+    <div class="marcas">${[["nuevo", "Nuevo"], ["destacado", "Tendencia"], ["top", "★ Top"]].map(([k, t]) => `<button data-marca="${k}" data-id="${esc(p.id)}" class="${p[k] ? "on" : ""}">${p[k] ? "✓ " : ""}${t}</button>`).join("")}</div></div>
+    <span class="pill">${esc(p.categoria)}${p.stock === 0 ? " · agotado" : ""}${p.activo === false ? " · oculto" : ""}</span>
     <div class="acc"><button data-ago="${esc(p.id)}" class="${p.stock === 0 ? "ago-on" : ""}">${p.stock === 0 ? "✓ Hay de nuevo" : "Agotado"}</button><button data-ed="${esc(p.id)}">Editar</button><button data-del="${esc(p.id)}">Eliminar</button></div></div>`).join("") || `<p class="vacio">Aún no hay productos. Pulsa “+ Nuevo producto”.</p>`;
 }
 $("#filtro").oninput = $("#fCat").onchange = pintar;
@@ -204,12 +208,16 @@ function abrir(p) {
   $("#pNombre").value = p?.nombre || ""; $("#pCat").value = p?.categoria || "Cadenas"; $("#pMat").value = p?.material || "Oro 18K";
   $("#pPrecio").value = p?.precio || ""; $("#pAntes").value = p?.precioAntes || ""; $("#pStock").value = p?.stock ?? "";
   $("#pPeso").value = p?.peso || ""; $("#pMedida").value = p?.medida || ""; $("#pOrden").value = p?.orden || 100; $("#pDesc").value = p?.descripcion || "";
-  $("#pActivo").checked = p ? p.activo !== false : true; $("#pNuevo").checked = p ? !!p.nuevo : true; $("#pDest").checked = !!p?.destacado;
+  $("#pActivo").checked = p ? p.activo !== false : true; $("#pNuevo").checked = p ? !!p.nuevo : true; $("#pDest").checked = !!p?.destacado; $("#pTop").checked = !!p?.top;
   fotos = [...(p?.imagenes || [])]; pintarFotos(); $("#eProd").textContent = ""; $("#dlg").showModal();
 }
 $("#nuevo").onclick = () => abrir(); $("#cancelar").onclick = () => $("#dlg").close();
 $("#lista").onclick = async e => {
   const ed = e.target.closest("[data-ed]"), del = e.target.closest("[data-del]");
+  const mc = e.target.closest("[data-marca]");
+  if (mc) { const p = lista.find(x => x.id === mc.dataset.id), k = mc.dataset.marca; mc.disabled = true;
+    try { const d = await api("guardar", { producto: { ...p, [k]: !p[k] } }); lista[lista.indexOf(p)] = d.producto; pintar(); }
+    catch (err) { alert(err.message); mc.disabled = false; } }
   const ago = e.target.closest("[data-ago]");
   if (ago) { const p = lista.find(x => x.id === ago.dataset.ago); ago.disabled = true;
     try { const d = await api("guardar", { producto: { ...p, stock: p.stock === 0 ? null : 0 } }); lista[lista.indexOf(p)] = d.producto; pintar(); }
@@ -238,7 +246,7 @@ $("#fProd").onsubmit = async e => {
   const producto = { id: edit?.id || crearId($("#pNombre").value), nombre: $("#pNombre").value.trim(), categoria: $("#pCat").value, material: $("#pMat").value,
     precio: +$("#pPrecio").value, precioAntes: +$("#pAntes").value || 0, stock: $("#pStock").value === "" ? null : +$("#pStock").value,
     peso: $("#pPeso").value.trim(), medida: $("#pMedida").value.trim(), orden: +$("#pOrden").value || 100, descripcion: $("#pDesc").value.trim(),
-    imagenes: fotos, activo: $("#pActivo").checked, nuevo: $("#pNuevo").checked, destacado: $("#pDest").checked };
+    imagenes: fotos, activo: $("#pActivo").checked, nuevo: $("#pNuevo").checked, destacado: $("#pDest").checked, top: $("#pTop").checked };
   if (!producto.nombre || !producto.precio) return $("#eProd").textContent = "Escribe el nombre y el precio.";
   $("#guardar").disabled = true;
   try { const d = await api("guardar", { producto }); const i = lista.findIndex(p => p.id === d.producto.id); if (i >= 0) lista[i] = d.producto; else lista.push(d.producto); $("#dlg").close(); pintar(); }
