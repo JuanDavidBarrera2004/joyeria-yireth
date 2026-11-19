@@ -96,6 +96,27 @@ export async function onRequestPost({ env, request }) {
       return json(200, { ok: true });
     }
 
+    case "encargos":
+      return json(200, (await env.TIENDA.get("encargos", { type: "json" })) || []);
+
+    case "estado-encargo": {
+      const lista = (await env.TIENDA.get("encargos", { type: "json" })) || [];
+      const e = lista.find(x => x.id === d.id);
+      if (!e) return json(404, { error: "Solicitud no encontrada" });
+      if (!["nuevo", "en proceso", "terminado"].includes(d.estado)) return json(400, { error: "Estado inválido" });
+      e.estado = d.estado;
+      await env.TIENDA.put("encargos", JSON.stringify(lista));
+      return json(200, { ok: true });
+    }
+
+    case "eliminar-encargo": {
+      const lista = (await env.TIENDA.get("encargos", { type: "json" })) || [];
+      const e = lista.find(x => x.id === d.id);
+      if (e) await Promise.all(e.fotos.map(u => env.TIENDA.delete(u.split("id=")[1])));
+      await env.TIENDA.put("encargos", JSON.stringify(lista.filter(x => x.id !== d.id)));
+      return json(200, { ok: true });
+    }
+
     case "ajustes":
       return json(200, await leerAjustes(env));
 
