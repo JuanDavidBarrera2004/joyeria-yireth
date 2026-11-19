@@ -44,7 +44,7 @@
   .subir{width:88px;height:88px;border:1px dashed var(--tenue);display:grid;place-items:center;text-align:center;font-size:12px;color:var(--gris);cursor:pointer;background:#fff}
   .papelera{display:grid;place-items:center;color:#a3392b!important;border-color:#e8c4bd!important}.papelera svg{width:17px;height:17px}.papelera:hover{background:#fbeeeb!important}
   .btn-borrar{display:inline-flex;gap:8px;align-items:center;background:#fff;color:#a3392b;border:1px solid #e8c4bd}.btn-borrar svg{width:16px;height:16px}.btn-borrar:hover{background:#fbeeeb}
-  #campoSub[hidden]{display:none}
+  #campoSub[hidden],#notaExcl[hidden]{display:none}
   .globo{background:#a3392b;color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;margin-left:4px}
   .enc{display:grid;grid-template-columns:auto 1fr auto;gap:16px;background:#fff;border:1px solid var(--linea);padding:12px 14px;align-items:start}
   .enc-fotos{display:flex;gap:6px}.enc-fotos a{width:84px;height:84px;background:var(--marfil) center/cover;border:1px solid var(--linea)}
@@ -133,7 +133,7 @@
 
   <div data-vista="encargos" hidden>
     <div class="barra">
-      <p style="color:var(--gris);font-size:14px;max-width:620px">Diseños exclusivos que los clientes envían desde la página <b>Exclusividad</b>, con sus fotos de referencia. El cliente también te escribe por WhatsApp con el número de solicitud.</p>
+      <p style="color:var(--gris);font-size:14px;max-width:620px">Diseños que los clientes envían desde la página <b>Fabricamos</b>, con sus fotos de referencia. El cliente también te escribe por WhatsApp con el número de solicitud.</p>
       <div style="display:flex;gap:8px"><select id="fEnc"><option value="">Todas</option><option value="nuevo">Nuevas</option><option value="en proceso">En proceso</option><option value="terminado">Terminadas</option></select><button class="btn btn-borde" id="recargarEnc" style="padding:12px 18px">Actualizar</button><button class="btn btn-borrar" id="borrarEnc" style="padding:12px 16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span>Eliminar todo</span></button></div>
     </div>
     <div class="lista" id="encargos"></div>
@@ -181,6 +181,7 @@
       <label class="campo">Tipo de oro<select id="pMat"></select></label>
     </div>
     <label class="campo" id="campoSub" hidden>Subcategoría<select id="pSub"></select></label>
+    <p id="notaExcl" hidden style="font-size:13px;color:var(--oro-osc);background:var(--crema);padding:8px 12px;margin:-4px 0 12px">Las joyas de <b>Exclusividad</b> (las que fabricaron para clientes) solo se muestran en la página Exclusividad, no en la tienda.</p>
     <div class="campo">Colores disponibles<div class="colores" id="pColores"></div></div>
     <div class="g3">
       <label class="campo">Precio ($)<input id="pPrecio" type="number" min="0" step="1000" placeholder="Vacío = consultar precio"></label>
@@ -243,7 +244,7 @@ $("#fCat").innerHTML += CATEGORIAS.map(c => `<option>${c}</option>`).join("");
 $("#pCat").innerHTML = CATEGORIAS.map(c => `<option>${c}</option>`).join("");
 $("#pMat").innerHTML = MATERIALES.map(c => `<option>${c}</option>`).join("");
 $("#mCat").innerHTML = $("#pCat").innerHTML;
-const pintarSub = (v = "") => { const l = SUBCATEGORIAS[$("#pCat").value] || []; $("#campoSub").hidden = !l.length;
+const pintarSub = (v = "") => { const l = SUBCATEGORIAS[$("#pCat").value] || []; $("#campoSub").hidden = !l.length; $("#notaExcl").hidden = $("#pCat").value !== "Exclusividad";
   $("#pSub").innerHTML = `<option value="">Sin subcategoría</option>` + l.map(s => `<option ${s === v ? "selected" : ""}>${s}</option>`).join(""); };
 $("#pCat").addEventListener("change", () => pintarSub()); $("#mMat").innerHTML = $("#pMat").innerHTML;
 $("#pColores").innerHTML = Object.entries(COLORES).map(([c, h]) => `<label><input type="checkbox" value="${c}"><i style="background:${h}"></i>Oro ${c.toLowerCase()}</label>`).join("");

@@ -27,11 +27,14 @@ export async function ajustes() {
   if (!a) VISTA_PREVIA = true;
   return (_aj = a || { ...AJUSTES_BASE, pagos: { tarjeta: true, addi: "vista-previa" } });
 }
-export async function productos() {
-  if (_prods) return _prods;
-  let l = await pedirJSON("/api/productos");
-  if (!Array.isArray(l)) { VISTA_PREVIA = true; l = EJEMPLOS; }
-  return (_prods = l.filter(p => p.activo !== false).sort((a, b) => (a.orden ?? 100) - (b.orden ?? 100)));
+// Las joyas de "Exclusividad" (hechas a clientes) solo se muestran en su página: productos(true) las incluye.
+export async function productos(todas = false) {
+  if (!_prods) {
+    let l = await pedirJSON("/api/productos");
+    if (!Array.isArray(l)) { VISTA_PREVIA = true; l = EJEMPLOS; }
+    _prods = l.filter(p => p.activo !== false).sort((a, b) => (a.orden ?? 100) - (b.orden ?? 100));
+  }
+  return todas ? _prods : _prods.filter(p => p.categoria !== "Exclusividad");
 }
 export const waUrl = (num, txt) => `https://wa.me/${num}?text=${encodeURIComponent(txt)}`;
 
@@ -80,7 +83,7 @@ export function pintarRejilla(cont, lista, vacio = "Pronto nuevas joyas.") {
 document.addEventListener("click", async e => {
   const b = e.target.closest("[data-add]"); if (!b) return;
   const card = b.closest("[data-id]"); if (!card) return;
-  const p = (await productos()).find(x => x.id === card.dataset.id);
+  const p = (await productos(true)).find(x => x.id === card.dataset.id);
   if (p) Carrito.agregar(p, 1);
 });
 
