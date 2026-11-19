@@ -28,6 +28,7 @@
   .pill{font-size:11.5px;padding:4px 10px;background:var(--crema);white-space:nowrap}
   .pill.pagado{background:#dff3e4;color:#1d6b35}.pill.pendiente{background:#fff3d6;color:#8a6a2f}.pill.rechazado,.pill.cancelado{background:#f8e1dd;color:#a3392b}.pill.enviado,.pill.entregado{background:#e3ecf8;color:#2d4f80}
   .acc{display:flex;gap:6px}.acc button{padding:8px 12px;border:1px solid var(--linea);background:#fff;font-size:13px}
+  .acc button[data-ago]{color:#a3392b;border-color:#e8c4bd}.acc button.ago-on{background:#dff3e4;color:#1d6b35;border-color:#b9dfc4}
   @media(max-width:640px){.fila{grid-template-columns:56px 1fr}.fila .pill{display:none}.acc{grid-column:1/-1}}
   dialog{margin:auto;width:min(720px,100% - 20px);max-height:94vh;border:0;padding:0;background:var(--marfil)}
   dialog::backdrop{background:#000a}
@@ -190,7 +191,7 @@ function pintar() {
   $("#lista").innerHTML = v.map(p => `<div class="fila${p.activo === false ? " oculto" : ""}">${mini(p)}
     <div><b style="font-weight:500">${esc(p.nombre)}</b><small>${pesos(p.precio)}${p.precioAntes ? ` (antes ${pesos(p.precioAntes)})` : ""} · ${esc(p.material)}${p.stock !== null && p.stock !== undefined ? ` · ${p.stock} und.` : ""}</small></div>
     <span class="pill">${esc(p.categoria)}${p.nuevo ? " · nueva" : ""}${p.destacado ? " · tendencia" : ""}${p.stock === 0 ? " · agotado" : ""}${p.activo === false ? " · oculto" : ""}</span>
-    <div class="acc"><button data-ed="${esc(p.id)}">Editar</button><button data-del="${esc(p.id)}">Eliminar</button></div></div>`).join("") || `<p class="vacio">Aún no hay productos. Pulsa “+ Nuevo producto”.</p>`;
+    <div class="acc"><button data-ago="${esc(p.id)}" class="${p.stock === 0 ? "ago-on" : ""}">${p.stock === 0 ? "✓ Hay de nuevo" : "Agotado"}</button><button data-ed="${esc(p.id)}">Editar</button><button data-del="${esc(p.id)}">Eliminar</button></div></div>`).join("") || `<p class="vacio">Aún no hay productos. Pulsa “+ Nuevo producto”.</p>`;
 }
 $("#filtro").oninput = $("#fCat").onchange = pintar;
 function pintarFotos() {
@@ -209,6 +210,10 @@ function abrir(p) {
 $("#nuevo").onclick = () => abrir(); $("#cancelar").onclick = () => $("#dlg").close();
 $("#lista").onclick = async e => {
   const ed = e.target.closest("[data-ed]"), del = e.target.closest("[data-del]");
+  const ago = e.target.closest("[data-ago]");
+  if (ago) { const p = lista.find(x => x.id === ago.dataset.ago); ago.disabled = true;
+    try { const d = await api("guardar", { producto: { ...p, stock: p.stock === 0 ? null : 0 } }); lista[lista.indexOf(p)] = d.producto; pintar(); }
+    catch (err) { alert(err.message); ago.disabled = false; } }
   if (ed) abrir(lista.find(p => p.id === ed.dataset.ed));
   if (del) { const p = lista.find(x => x.id === del.dataset.del); if (!confirm(`¿Eliminar "${p.nombre}"?`)) return;
     try { await api("eliminar", { id: p.id }); lista = lista.filter(x => x !== p); pintar(); } catch (err) { alert(err.message); } }
