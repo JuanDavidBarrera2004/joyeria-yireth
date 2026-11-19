@@ -147,12 +147,14 @@ function cordonRecto(m, a, b, r) {
 
 // Construye todas las mallas según la configuración
 export function construirPulsera(cfg) {
-  const oro = nuevaMalla(), hilo = nuevaMalla(), foto = nuevaMalla();
+  const oro = nuevaMalla(), hilo = nuevaMalla(), foto = nuevaMalla(), silueta = nuevaMalla();
   const items = [];
   const izq = cfg.izq || [], der = cfg.der || [];
   if (izq.length || der.length || cfg.herraje) items.push({ tipo: "remate", d: 2.6 });
   for (const d of [...izq].reverse()) items.push({ tipo: "balin", d });
-  if (cfg.herraje) items.push({ tipo: "herraje", d: 19 });
+  const rec = cfg.herraje && cfg.herraje.recorte;                 // { aspecto } cuando se pudo quitar el fondo
+  const hAlto = rec ? 17 : 14, hAncho = rec ? Math.min(20, hAlto * rec.aspecto) : 14;
+  if (cfg.herraje) items.push({ tipo: "herraje", d: hAncho + 5 });
   for (const d of der) items.push({ tipo: "balin", d });
   if (items.length) items.push({ tipo: "remate", d: 2.6 });
   const sep = .25, total = items.reduce((t, x) => t + x.d, 0) + sep * Math.max(0, items.length - 1);
@@ -190,6 +192,19 @@ export function construirPulsera(cfg) {
     const th = it.s / R, f = marco(th);
     if (it.tipo === "balin") esfera(oro, f.p, it.d / 2, cfg.liso ? 3 : 2, !cfg.liso, semilla++);
     else if (it.tipo === "remate") esfera(oro, f.p, it.d / 2, 2, false);
+    else if (it.tipo === "herraje" && rec) {
+      // la joya recortada: frente con la foto y respaldo dorado con la misma silueta
+      const ex = v3.mul(f.t, hAncho / 2), ey = v3.mul(f.u, hAlto / 2), cf = v3.add(f.p, v3.mul(f.r, 1.5)), cb = v3.add(f.p, v3.mul(f.r, 1.1));
+      const q = (m, c, n, flip) => {
+        const A = v3.sub(v3.sub(c, ex), v3.mul(ey, -1)), B = v3.add(v3.add(c, ex), ey), C = v3.add(v3.sub(c, v3.mul(ey, 1)), ex), D = v3.sub(v3.sub(c, ex), ey);
+        // A arriba-izq, B arriba-der, C abajo-der, D abajo-izq
+        const uA = [flip ? 1 : 0, 0], uB = [flip ? 0 : 1, 0], uC = [flip ? 0 : 1, 1], uD = [flip ? 1 : 0, 1];
+        tri(m, A, D, C, n, n, n, uA, uD, uC); tri(m, A, C, B, n, n, n, uA, uC, uB);
+      };
+      q(foto, cf, f.r, false);
+      q(silueta, cb, v3.mul(f.r, -1), false);
+      for (const lado of [-1, 1]) toro(oro, v3.add(f.p, v3.mul(f.t, lado * (hAncho / 2 + 1.4))), f.t, f.r, 1.5, .45, 24, 10);
+    }
     else if (it.tipo === "herraje") {
       const c = v3.add(f.p, v3.mul(f.r, 1.6)), rr = 7;
       toro(oro, c, f.t, f.u, rr, .85, 60, 12);
@@ -198,7 +213,7 @@ export function construirPulsera(cfg) {
       for (const lado of [-1, 1]) toro(oro, v3.add(f.p, v3.mul(f.t, lado * 8.6)), f.t, f.r, 1.5, .45, 24, 10);
     }
   }
-  return { oro, hilo, foto };
+  return { oro, hilo, foto, silueta };
 }
 
 /* ---------------- WebGL ---------------- */
@@ -234,8 +249,14 @@ void main(){
     float d=max(dot(N,L1),0.0)*0.85+max(dot(N,L2),0.0)*0.35+0.2;
     float sh=pow(1.0-max(dot(N,V),0.0),2.0)*0.22;
     c = base*d + sh*mix(base,vec3(1.0),0.6) + vec3(pow(max(dot(reflect(-L1,N),V),0.0),24.0)*0.06);
+  } else if(uModo==4){
+    if(texture(uTex,vU).a<0.45) discard;
+    vec3 Rf=reflect(-V,N);
+    c = base*(0.08+0.25*max(dot(N,L1),0.0)) + base*ent(Rf)*0.8;
   } else {
-    vec3 t = uTexOk>0.5 ? pow(texture(uTex,vU).rgb,vec3(2.2)) : base;
+    vec4 tx = texture(uTex,vU);
+    if(uModo==5 && tx.a<0.45) discard;
+    vec3 t = uTexOk>0.5 ? pow(tx.rgb,vec3(2.2)) : base;
     float d=0.6+0.5*max(dot(N,L1),0.0);
     vec3 Rf=reflect(-V,N);
     c = t*d + vec3(pow(max(dot(Rf,L1),0.0),40.0)*0.35);
@@ -243,6 +264,151 @@ void main(){
   c = c/(1.0+c*0.32);
   o=vec4(pow(c,vec3(1.0/2.2)),1.0);
 }`;
+
+/* ---------- quitar el fondo de la foto del herraje ---------- */
+const cargarImg = url => new Promise(ok => { const i = new Image(); i.crossOrigin = "anonymous"; i.onload = () => ok(i); i.onerror = () => ok(null); i.src = url; });
+function analizar(img, max = 480) {
+  const k = Math.min(1, max / Math.max(img.width, img.height)), w = Math.round(img.width * k), h = Math.round(img.height * k);
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = h; const cx = cv.getContext("2d", { willReadFrequently: true });
+  cx.drawImage(img, 0, 0, w, h);
+  const d = cx.getImageData(0, 0, w, h);
+  // color del fondo = promedio del borde; qué tan parejo es
+  const borde = [];
+  for (let x = 0; x < w; x += 2) borde.push((0 * w + x) * 4, ((h - 1) * w + x) * 4);
+  for (let y = 0; y < h; y += 2) borde.push((y * w) * 4, (y * w + w - 1) * 4);
+  let m = [0, 0, 0]; for (const i of borde) { m[0] += d.data[i]; m[1] += d.data[i + 1]; m[2] += d.data[i + 2]; } m = m.map(v => v / borde.length);
+  let dev = 0; for (const i of borde) dev += Math.hypot(d.data[i] - m[0], d.data[i + 1] - m[1], d.data[i + 2] - m[2]); dev /= borde.length;
+  return { cv, cx, d, w, h, fondo: m, dev, claro: (m[0] + m[1] + m[2]) / 3 };
+}
+function recortarFondo(a) {
+  const { d, w, h, fondo } = a, px = d.data, T1 = 34, T2 = 62;
+  const dist = i => Math.hypot(px[i] - fondo[0], px[i + 1] - fondo[1], px[i + 2] - fondo[2]);
+  const es = new Uint8Array(w * h), cola = [];
+  const meter = (x, y) => { const p = y * w + x; if (es[p]) return; if (dist(p * 4) < T2) { es[p] = 1; cola.push(p); } };
+  for (let x = 0; x < w; x++) { meter(x, 0); meter(x, h - 1); }
+  for (let y = 0; y < h; y++) { meter(0, y); meter(w - 1, y); }
+  while (cola.length) { const p = cola.pop(), x = p % w, y = (p / w) | 0; if (x > 0) meter(x - 1, y); if (x < w - 1) meter(x + 1, y); if (y > 0) meter(x, y - 1); if (y < h - 1) meter(x, y + 1); }
+  let x0 = w, y0 = h, x1 = 0, y1 = 0, quedan = 0;
+  for (let p = 0; p < w * h; p++) {
+    const i = p * 4;
+    if (es[p]) { const dd = dist(i); px[i + 3] = dd < T1 ? 0 : Math.round(255 * (dd - T1) / (T2 - T1)); }
+    if (px[i + 3] > 128) { quedan++; const x = p % w, y = (p / w) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  const frac = quedan / (w * h);
+  if (frac < .02 || frac > .6 || x1 <= x0 || y1 <= y0) return null;
+  // si la joya toca mucho el borde, el fondo no se separó bien
+  let toca = 0, nb = 0;
+  const chk = p => { nb++; if (px[p * 4 + 3] > 128) toca++; };
+  for (let x = 0; x < w; x++) { chk(x); chk((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { chk(y * w); chk(y * w + w - 1); }
+  if (toca / nb > .04) return null;
+  // que lo recortado sea joya (tenga oro) y no, por ejemplo, la bandeja donde está
+  let oro = 0, tot = 0;
+  for (let p = 0; p < w * h; p += 2) { const i = p * 4; if (px[i + 3] < 128) continue; tot++;
+    const R = px[i], G = px[i + 1], B = px[i + 2], mx = Math.max(R, G, B), mn = Math.min(R, G, B);
+    if (mx > 70 && (mx - mn) / mx > .26 && R >= G && G > B) oro++; }
+  if (!tot || oro / tot < .18) return null;
+  // quedarse solo con las piezas grandes (quita restos de bandejas, sombras y polvo)
+  {
+    const N = w * h, comp = new Int32Array(N).fill(-1), tams = [];
+    for (let p0 = 0; p0 < N; p0++) {
+      if (px[p0 * 4 + 3] < 128 || comp[p0] >= 0) continue;
+      const id = tams.length; let t = 0; const st = [p0]; comp[p0] = id;
+      while (st.length) { const p = st.pop(); t++; const x = p % w, y = (p / w) | 0;
+        for (const q of [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, y > 0 ? p - w : -1, y < h - 1 ? p + w : -1]) if (q >= 0 && px[q * 4 + 3] >= 128 && comp[q] < 0) { comp[q] = id; st.push(q); } }
+      tams.push(t);
+    }
+    // oro de cada pieza: se usa solo la pieza de oro más grande (una joya por pulsera)
+    const oroC = new Array(tams.length).fill(0);
+    for (let p = 0; p < N; p++) { const c = comp[p]; if (c < 0) continue; const i = p * 4, R = px[i], G = px[i + 1], B = px[i + 2], mx = Math.max(R, G, B), mn = Math.min(R, G, B);
+      if (mx > 70 && (mx - mn) / mx > .26 && R >= G && G > B) oroC[c]++; }
+    let elegido = -1; tams.forEach((t, c) => { if (oroC[c] / t >= .18 && (elegido < 0 || t > tams[elegido])) elegido = c; });
+    if (elegido < 0) return null;
+    const vale = tams.map((t, c) => c === elegido);
+    x0 = w; y0 = h; x1 = 0; y1 = 0; let oro2 = 0, tot2 = 0;
+    for (let p = 0; p < N; p++) {
+      const i = p * 4, c = comp[p];
+      if (c < 0 || !vale[c]) { px[i + 3] = 0; continue; }
+      const x = p % w, y = (p / w) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      tot2++; const R = px[i], G = px[i + 1], B = px[i + 2], mx = Math.max(R, G, B), mn = Math.min(R, G, B);
+      if (mx > 70 && (mx - mn) / mx > .26 && R >= G && G > B) oro2++;
+    }
+    if (!tot2 || oro2 / tot2 < .18 || x1 <= x0) return null;
+  }
+  a.cx.putImageData(d, 0, 0);
+  const pad = 4; x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+  const cw = x1 - x0 + 1, ch = y1 - y0 + 1, out = document.createElement("canvas"); out.width = cw; out.height = ch;
+  out.getContext("2d").drawImage(a.cv, x0, y0, cw, ch, 0, 0, cw, ch);
+  return { canvas: out, recorte: { aspecto: cw / ch } };
+}
+// Segundo método: encuentra el oro por su color, rellena las piedras encerradas y se queda con la pieza más grande
+function recortarOro(a) {
+  const { d, w, h } = a, px = d.data, N = w * h;
+  let m = new Uint8Array(N);
+  for (let p = 0; p < N; p++) {
+    const i = p * 4, R = px[i] / 255, G = px[i + 1] / 255, B = px[i + 2] / 255, mx = Math.max(R, G, B), mn = Math.min(R, G, B), dl = mx - mn;
+    if (mx < .3 || dl / mx < .26) continue;
+    let hh = mx === R ? ((G - B) / dl) % 6 : mx === G ? (B - R) / dl + 2 : (R - G) / dl + 4; hh *= 60; if (hh < 0) hh += 360;
+    if (hh >= 16 && hh <= 58) m[p] = 1;
+  }
+  const dilatar = (src, r) => { const o = new Uint8Array(N); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { if (!src[y * w + x]) continue; for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < w && Y < h) o[Y * w + X] = 1; } } return o; };
+  const erosionar = (src, r) => { const inv = src.map(v => 1 - v), di = dilatar(inv, r); return di.map(v => 1 - v); };
+  m = erosionar(dilatar(m, 3), 2);
+  // rellenar huecos (piedras rodeadas de oro)
+  const fuera = new Uint8Array(N), cola = [];
+  const meter = p => { if (!fuera[p] && !m[p]) { fuera[p] = 1; cola.push(p); } };
+  for (let x = 0; x < w; x++) { meter(x); meter((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { meter(y * w); meter(y * w + w - 1); }
+  while (cola.length) { const p = cola.pop(), x = p % w, y = (p / w) | 0; if (x > 0) meter(p - 1); if (x < w - 1) meter(p + 1); if (y > 0) meter(p - w); if (y < h - 1) meter(p + w); }
+  for (let p = 0; p < N; p++) if (!fuera[p]) m[p] = 1;
+  // pieza más grande
+  const comp = new Int32Array(N).fill(-1); let mejor = -1, tamMejor = 0, id = 0;
+  for (let p0 = 0; p0 < N; p0++) {
+    if (!m[p0] || comp[p0] >= 0) continue;
+    let t = 0; const st = [p0]; comp[p0] = id;
+    while (st.length) { const p = st.pop(); t++; const x = p % w, y = (p / w) | 0;
+      for (const q of [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, y > 0 ? p - w : -1, y < h - 1 ? p + w : -1]) if (q >= 0 && m[q] && comp[q] < 0) { comp[q] = id; st.push(q); } }
+    if (t > tamMejor) { tamMejor = t; mejor = id; } id++;
+  }
+  if (mejor < 0) return null;
+  const frac = tamMejor / N;
+  if (frac < .015 || frac > .45) return null;
+  let x0 = w, y0 = h, x1 = 0, y1 = 0, toca = 0;
+  for (let p = 0; p < N; p++) {
+    const dentro = comp[p] === mejor; px[p * 4 + 3] = dentro ? 255 : 0;
+    if (dentro) { const x = p % w, y = (p / w) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; if (x === 0 || y === 0 || x === w - 1 || y === h - 1) toca++; }
+  }
+  if (toca > 4) return null;
+  a.cx.putImageData(d, 0, 0);
+  const pad = 3; x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+  const cw = x1 - x0 + 1, ch = y1 - y0 + 1, out = document.createElement("canvas"); out.width = cw; out.height = ch;
+  const oc = out.getContext("2d"); oc.drawImage(a.cv, x0, y0, cw, ch, 0, 0, cw, ch);
+  return { canvas: out, recorte: { aspecto: cw / ch } };
+}
+
+const CACHE_HERRAJES = new Map();
+export function prepararHerraje(fotos) {
+  const clave = (fotos || []).join("|");
+  if (!CACHE_HERRAJES.has(clave)) CACHE_HERRAJES.set(clave, procesarHerraje(fotos));
+  return CACHE_HERRAJES.get(clave);
+}
+async function procesarHerraje(fotos) {
+  const imgs = (await Promise.all(fotos.slice(0, 4).map(cargarImg))).filter(Boolean);
+  if (!imgs.length) return null;
+  // se prueba primero la foto con el fondo más parejo
+  const an = imgs.map(i => analizar(i, 640)).sort((x, y) => x.dev - y.dev);
+  for (const a of an) {
+    if (a.dev > 26 || a.claro < 150) continue;   // solo fotos con fondo claro y parejo
+    const r = recortarFondo(a);
+    if (r) return r;
+  }
+  for (const i of imgs) { const r = recortarOro(analizar(i, 640)); if (r) return r; }
+  // si no se pudo separar la joya: medallón con la foto
+  const img = imgs[0], cv = document.createElement("canvas"); cv.width = cv.height = 512; const cx = cv.getContext("2d");
+  const k = Math.max(512 / img.width, 512 / img.height) * 1.12, w = img.width * k, h = img.height * k;
+  cx.drawImage(img, (512 - w) / 2, (512 - h) / 2, w, h);
+  return { canvas: cv, recorte: null };
+}
 
 export function crearVisor(canvas, alCambiar) {
   const gl = canvas.getContext("webgl2", { antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -274,33 +440,41 @@ export function crearVisor(canvas, alCambiar) {
   const tex = gl.createTexture(); let texOk = false, texUrl = "";
   gl.bindTexture(gl.TEXTURE_2D, tex);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([200, 160, 80, 255]));
-  const cargarFoto = url => {
-    if (url === texUrl) return; texUrl = url; texOk = false;
-    if (!url) return;
-    const img = new Image(); img.crossOrigin = "anonymous";
-    img.onload = () => {
-      if (texUrl !== url) return;
-      const cv = document.createElement("canvas"); cv.width = cv.height = 512; const cx = cv.getContext("2d");
-      const k = Math.max(512 / img.width, 512 / img.height) * 1.12, w = img.width * k, h = img.height * k;
-      cx.drawImage(img, (512 - w) / 2, (512 - h) / 2, w, h);
-      gl.bindTexture(gl.TEXTURE_2D, tex); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv); gl.generateMipmap(gl.TEXTURE_2D);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-      texOk = true; pedir();
+  const subirTex = cv => {
+    gl.bindTexture(gl.TEXTURE_2D, tex); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv); gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  };
+  const cargarFoto = (fotos, alListo) => {
+    const clave = (fotos || []).join("|");
+    if (clave === texUrl) return; texUrl = clave; texOk = false;
+    if (!fotos?.length) return;
+    const usar = res => {
+      if (texUrl !== clave) return;
+      subirTex(res.canvas); texOk = true; alListo(res.recorte); pedir();
     };
-    img.src = url;
+    prepararHerraje(fotos).then(res => { if (res) usar(res); });
   };
 
-  let g = {}, colores = { oro: [1, .78, .34], hilo: [.1, .1, .1] };
+  let g = {}, colores = { oro: [1, .78, .34], hilo: [.1, .1, .1] }, ultimo = null, recorteActual = null;
   let yaw = -.35, pitch = .42, dist = 118, auto = true, pend = true;
   const pedir = () => { pend = true; };
 
-  function actualizar(cfg) {
-    const m = construirPulsera(cfg);
-    for (const k of ["oro", "hilo", "foto"]) { borrar(g[k]); g[k] = subir(m[k]); }
-    colores = { oro: cfg.colorOro, hilo: cfg.colorHilo };
-    cargarFoto(cfg.herraje?.foto || "");
+  function armar() {
+    const cfg = ultimo; if (!cfg) return;
+    const h = cfg.herraje ? { ...cfg.herraje, recorte: texOk ? recorteActual : null } : null;
+    const m = construirPulsera({ ...cfg, herraje: h });
+    for (const k of ["oro", "hilo", "foto", "silueta"]) { borrar(g[k]); g[k] = subir(m[k]); }
     pedir();
+  }
+  function actualizar(cfg) {
+    ultimo = cfg;
+    colores = { oro: cfg.colorOro, hilo: cfg.colorHilo };
+    const clave = (cfg.herraje?.fotos || []).join("|");
+    if (clave !== texUrl) { texOk = false; recorteActual = null; }
+    cargarFoto(cfg.herraje?.fotos, rec => { recorteActual = rec; armar(); });
+    armar();
   }
   function dibujar() {
     const dpr = Math.min(devicePixelRatio || 1, 2), w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
@@ -313,7 +487,8 @@ export function crearVisor(canvas, alCambiar) {
     const pinta = (o, modo, col) => { if (!o || !o.n) return; gl.uniform1i(uModo, modo); gl.uniform3fv(uCol, col); gl.bindVertexArray(o.vao); gl.drawArrays(gl.TRIANGLES, 0, o.n); };
     pinta(g.hilo, 1, colores.hilo); pinta(g.oro, 0, colores.oro);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1f(uTexOk, texOk ? 1 : 0);
-    pinta(g.foto, 2, colores.oro);
+    pinta(g.foto, recorteActual ? 5 : 2, colores.oro);
+    pinta(g.silueta, 4, colores.oro);
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
     pinta(gPiso, 3, [0, 0, 0]); gl.depthMask(true);
   }
