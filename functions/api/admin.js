@@ -2,6 +2,7 @@
 import {
   json, leerProductos, guardarProductos, limpiarProducto, claveCorrecta,
   leerAjustes, limpiarAjustes, leerPedido, guardarPedido, aleatorio, leerBanners, limpiarBanner,
+  leerVideos, limpiarVideo, idVideoOk, PARTE_VIDEO, MAX_VIDEO,
 } from "../../lib/comun.js";
 
 const TIPOS = ["image/jpeg", "image/png", "image/webp"];
@@ -50,6 +51,49 @@ export async function onRequestPost({ env, request }) {
       const lista = (Array.isArray(d.banners) ? d.banners : []).slice(0, 10).map(limpiarBanner).filter(Boolean);
       await env.TIENDA.put("banners", JSON.stringify(lista));
       return json(200, { ok: true, banners: lista });
+    }
+
+    case "videos":
+      return json(200, await leerVideos(env));
+
+    case "nuevo-video": {
+      const tam = Number(d.tam) || 0;
+      if (!tam || tam > MAX_VIDEO) return json(400, { error: "El video pesa más de 120 MB. Recórtalo o comprímelo antes de subirlo." });
+      return json(200, { id: "vid-" + aleatorio(16), parte: PARTE_VIDEO });
+    }
+
+    case "guardar-video": {
+      const v = limpiarVideo(d.video);
+      if (!v) return json(400, { error: "Datos del video inválidos" });
+      const ultima = await env.TIENDA.get(`${v.id}:${v.partes - 1}`, { type: "arrayBuffer" });
+      if (!ultima) return json(400, { error: "El video no terminó de subir. Inténtalo de nuevo." });
+      const lista = await leerVideos(env);
+      const i = lista.findIndex(x => x.id === v.id);
+      if (i >= 0) lista[i] = v; else lista.unshift(v);
+      await env.TIENDA.put("videos", JSON.stringify(lista.slice(0, 30)));
+      return json(200, { ok: true, video: v });
+    }
+
+    case "ordenar-videos": {
+      const actual = await leerVideos(env);
+      const cambios = new Map((Array.isArray(d.videos) ? d.videos : []).map(v => [v.id, v]));
+      const ids = (Array.isArray(d.videos) ? d.videos : []).map(v => v.id);
+      const lista = ids.map(id => actual.find(v => v.id === id)).filter(Boolean)
+        .concat(actual.filter(v => !ids.includes(v.id)))
+        .map(v => limpiarVideo({ ...v, ...(cambios.has(v.id) ? { titulo: cambios.get(v.id).titulo, activo: cambios.get(v.id).activo } : {}) })).filter(Boolean);
+      await env.TIENDA.put("videos", JSON.stringify(lista));
+      return json(200, { ok: true, videos: lista });
+    }
+
+    case "eliminar-video": {
+      if (!idVideoOk(d.id)) return json(400, { error: "Video inválido" });
+      const lista = await leerVideos(env);
+      const v = lista.find(x => x.id === d.id);
+      await env.TIENDA.put("videos", JSON.stringify(lista.filter(x => x.id !== d.id)));
+      const partes = v?.partes || Math.ceil(MAX_VIDEO / PARTE_VIDEO);
+      await Promise.all(Array.from({ length: partes }, (_, n) => env.TIENDA.delete(`${d.id}:${n}`)));
+      if (v?.poster?.startsWith("/api/imagen?id=")) await env.TIENDA.delete(v.poster.split("id=")[1]);
+      return json(200, { ok: true });
     }
 
     case "ajustes":
