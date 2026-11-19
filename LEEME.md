@@ -28,8 +28,9 @@ La joyería ya acepta Addi en la tienda física. Para activarlo en línea:
 Mientras una pasarela no esté configurada, su opción aparece como "Muy pronto" y el cliente puede pedir por WhatsApp.
 
 ## Panel (`/admin.html`)
-- **Productos:** nombre, categoría, material, precio, precio antes (oferta), unidades, peso, medida, descripción y hasta 8 fotos. Cuadradas (1:1) de 1200 × 1200 px se ven mejor.
+- **Productos:** nombre, categoría, tipo de oro (18K, italiano o nacional), colores (amarillo, blanco, rosado), precio, precio antes (oferta), unidades, peso, medida, descripción y hasta 8 fotos. Cuadradas (1:1) de 1200 × 1200 px se ven mejor.
 - **Portada:** el carrusel del inicio. Cada diapositiva lleva foto (1920 × 750 px; opcional otra de 1080 × 1350 px para celular), título, segunda línea dorada, texto, botón y a dónde lleva. Si la foto ya viene diseñada con texto (Canva), marca "Foto ya diseñada" y se muestra completa. Se pueden ordenar, activar o desactivar por temporada. Si no hay ninguna activa, se ve la portada de siempre.
+- **Videos:** suben al inicio en la sección "Nuestros videos". Mejor verticales, en MP4, de máximo 1 minuto y 120 MB. Se guardan en el mismo almacén KV (el plan gratis de Cloudflare da 1 GB en total, unos 15-20 videos cortos); borra los viejos para liberar espacio.
 - **Pedidos:** cada compra con datos del cliente, productos, total y estado. Los pagos de Wompi y Addi se marcan como "pagado" solos; los de WhatsApp los cambias tú.
 - **Ajustes:** mensaje de la barra superior, WhatsApp, dirección, horario, costo de envío y envío gratis desde.
 

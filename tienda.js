@@ -1,5 +1,7 @@
 // Joyería Yireth — lógica común de la tienda
-import { EJEMPLOS, AJUSTES_BASE, CATEGORIAS } from "/lib/datos.js";
+import { EJEMPLOS, AJUSTES_BASE, CATEGORIAS, COLORES } from "/lib/datos.js";
+export { COLORES };
+export const puntos = cs => cs?.length ? `<span class="puntos">${cs.map(c => `<i style="background:${COLORES[c]}" title="Oro ${c.toLowerCase()}"></i>`).join("")}</span>` : "";
 
 export const $ = (s, c = document) => c.querySelector(s);
 export const $$ = (s, c = document) => [...c.querySelectorAll(s)];
@@ -63,7 +65,7 @@ export function tarjeta(p) {
     ${agotado ? "" : `<button class="add-rapido" data-add>Agregar al carrito</button>`}</div>
     <div class="prod-info">
       <h3><a href="/producto/${esc(p.id)}">${esc(p.nombre)}</a></h3>
-      <div class="meta">${esc(meta)}</div>
+      <div class="meta">${esc(meta)}${puntos(p.colores)}</div>
       <div class="precio">${p.precioAntes ? `<span class="rojo">${pesos(p.precio)}</span><s>${pesos(p.precioAntes)}</s>` : pesos(p.precio)}</div>
       ${p.precio >= 50000 ? `<div class="cuotas">Paga a cuotas con Addi</div>` : ""}
     </div>
@@ -119,6 +121,42 @@ export async function montarCarrusel(sec, lista) {
 }
 
 /* ---------- carrito ---------- */
+/* ---------- videos del inicio ---------- */
+export async function montarVideos(sec) {
+  if (!sec) return;
+  let l = [];
+  if (VISTA_PREVIA) l = [];
+  else try { const r = await fetch("/api/videos"); if (r.ok) l = await r.json(); } catch {}
+  if (!l.length) return;
+  sec.hidden = false;
+  const caja = sec.querySelector(".videos");
+  caja.innerHTML = l.map((v, i) => `<button class="video-tarj" data-v="${i}" aria-label="Ver video${v.titulo ? ": " + esc(v.titulo) : ""}">
+    <span class="video-img" style="${v.poster ? `background-image:url('${esc(v.poster)}')` : ""}"></span>
+    <span class="video-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+    ${v.titulo ? `<span class="video-tit">${esc(v.titulo)}</span>` : ""}</button>`).join("");
+  let modal = document.getElementById("modalVideo");
+  if (!modal) {
+    modal = document.createElement("div"); modal.id = "modalVideo"; modal.className = "modal-video"; modal.hidden = true;
+    modal.innerHTML = `<button class="mv-cerrar" aria-label="Cerrar">×</button><button class="mv-nav ant" aria-label="Video anterior">‹</button><div class="mv-caja"></div><button class="mv-nav sig" aria-label="Video siguiente">›</button>`;
+    document.body.append(modal);
+  }
+  let actual = 0;
+  const mostrar = i => {
+    actual = (i + l.length) % l.length; const v = l[actual];
+    modal.querySelector(".mv-caja").innerHTML = `<video src="${esc(v.src)}" ${v.poster ? `poster="${esc(v.poster)}"` : ""} controls autoplay playsinline></video>${v.titulo ? `<p>${esc(v.titulo)}</p>` : ""}`;
+    modal.querySelectorAll(".mv-nav").forEach(b => b.hidden = l.length < 2);
+    modal.hidden = false; document.body.style.overflow = "hidden";
+  };
+  const cerrar = () => { modal.hidden = true; modal.querySelector(".mv-caja").innerHTML = ""; document.body.style.overflow = ""; };
+  caja.onclick = e => { const b = e.target.closest("[data-v]"); if (b) mostrar(+b.dataset.v); };
+  modal.onclick = e => {
+    if (e.target.closest(".mv-cerrar") || e.target === modal) cerrar();
+    else if (e.target.closest(".ant")) mostrar(actual - 1);
+    else if (e.target.closest(".sig")) mostrar(actual + 1);
+  };
+  document.addEventListener("keydown", e => { if (modal.hidden) return; if (e.key === "Escape") cerrar(); if (e.key === "ArrowRight") mostrar(actual + 1); if (e.key === "ArrowLeft") mostrar(actual - 1); });
+}
+
 export const Carrito = {
   items: [],
   cargar() { try { this.items = JSON.parse(localStorage.getItem("yj-carrito") || "[]"); } catch { this.items = []; } },

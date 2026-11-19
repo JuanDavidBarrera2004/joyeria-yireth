@@ -42,6 +42,14 @@
   .foto button{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;background:#000a;color:#fff;font-size:13px}
   .foto .pri{position:absolute;left:2px;bottom:2px;font-size:10px;background:var(--tinta);color:#fff;padding:1px 5px}
   .subir{width:88px;height:88px;border:1px dashed var(--tenue);display:grid;place-items:center;text-align:center;font-size:12px;color:var(--gris);cursor:pointer;background:#fff}
+  .subiendo{background:#fff;border:1px solid var(--linea);padding:14px 16px;margin-bottom:14px;font-size:14px}.barra-prog{height:6px;background:var(--crema);margin-top:8px}.barra-prog i{display:block;height:100%;width:0;background:var(--oro);transition:width .3s}
+  .lista-videos{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+  .tarj-video{background:#fff;border:1px solid var(--linea);padding:10px;display:flex;flex-direction:column;gap:8px}.tarj-video.oculto{opacity:.55}
+  .vprev{aspect-ratio:9/16;background:var(--cafe) center/cover;display:grid;place-items:center;overflow:hidden}.vprev video{width:100%;height:100%;object-fit:cover;background:#000}
+  .vprev button{width:52px;height:52px;border-radius:50%;border:0;background:rgba(255,255,255,.88);font-size:18px;color:var(--tinta);cursor:pointer}
+  .tarj-video input[data-tit]{padding:8px 10px;border:1px solid var(--linea);font:inherit;font-size:13px}.mini-check{font-size:13px;display:flex;gap:6px;align-items:center}
+  .tarj-video .acc button{padding:6px 10px}.tarj-video .acc button[data-delv]{margin-left:auto}
+  .colores{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;margin-top:8px}.colores label{display:flex;gap:7px;align-items:center}.colores i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.18)}
   .checks{display:flex;gap:20px;flex-wrap:wrap;font-size:14px}.checks label{display:flex;gap:8px;align-items:center}
   .pie-dlg{display:flex;justify-content:flex-end;gap:10px}
   .caja{background:#fff;border:1px solid var(--linea);padding:24px;display:grid;gap:14px;max-width:720px}
@@ -74,7 +82,7 @@
 <section class="panel contenedor" id="panel">
   <div class="top">
     <a class="logo" href="/" target="_blank" style="align-items:flex-start"><b style="font-size:24px;padding:0">YIRETH</b><small style="padding:0">PANEL</small></a>
-    <div class="tabs"><button class="tab activo" data-tab="productos">Productos</button><button class="tab" data-tab="portada">Portada</button><button class="tab" data-tab="pedidos">Pedidos</button><button class="tab" data-tab="ajustes">Ajustes</button></div>
+    <div class="tabs"><button class="tab activo" data-tab="productos">Productos</button><button class="tab" data-tab="portada">Portada</button><button class="tab" data-tab="videos">Videos</button><button class="tab" data-tab="pedidos">Pedidos</button><button class="tab" data-tab="ajustes">Ajustes</button></div>
     <button class="btn btn-borde" id="salir" style="padding:10px 18px">Salir</button>
   </div>
 
@@ -95,6 +103,17 @@
     <p class="error" id="ePortada"></p>
     <div id="diaps"></div>
     <input type="file" id="archivoDiap" accept="image/jpeg,image/png,image/webp" hidden>
+  </div>
+
+  <div data-vista="videos" hidden>
+    <div class="barra">
+      <p style="color:var(--gris);font-size:14px;max-width:620px">Los videos aparecen en el inicio, en la sección <b>Nuestros videos</b>. Recomendado: video <b>vertical</b> (como los de Instagram o TikTok), formato <b>MP4</b>, de máximo <b>1 minuto</b> y <b>120 MB</b>. Si no hay videos, la sección no se muestra.</p>
+      <label class="btn btn-negro" for="archivoVideo" style="padding:12px 20px;cursor:pointer">+ Subir video</label>
+    </div>
+    <input type="file" id="archivoVideo" accept="video/mp4,video/quicktime,video/webm,video/*" hidden>
+    <div id="subiendo" class="subiendo" hidden><b id="subTxt">Subiendo…</b><div class="barra-prog"><i id="subBarra"></i></div></div>
+    <p class="error" id="eVideos"></p>
+    <div class="lista-videos" id="listaVideos"></div>
   </div>
 
   <div data-vista="pedidos" hidden>
@@ -127,8 +146,9 @@
     <label class="campo">Nombre<input id="pNombre" required maxlength="120" placeholder="Ej: Cadena Cartier 50 cm"></label>
     <div class="g2">
       <label class="campo">Categoría<select id="pCat"></select></label>
-      <label class="campo">Material<select id="pMat"></select></label>
+      <label class="campo">Tipo de oro<select id="pMat"></select></label>
     </div>
+    <div class="campo">Colores disponibles<div class="colores" id="pColores"></div></div>
     <div class="g3">
       <label class="campo">Precio ($)<input id="pPrecio" type="number" min="0" step="1000" required></label>
       <label class="campo">Precio antes ($, oferta)<input id="pAntes" type="number" min="0" step="1000" placeholder="Opcional"></label>
@@ -156,7 +176,7 @@
 </dialog>
 
 <script type="module">
-import { CATEGORIAS, MATERIALES } from "/lib/datos.js";
+import { CATEGORIAS, MATERIALES, COLORES } from "/lib/datos.js";
 import { arte, pesos, esc } from "/tienda.js";
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 let clave = sessionStorage.getItem("yj-clave") || "", lista = [], pedidos = [], edit = null, fotos = [];
@@ -180,19 +200,21 @@ $$(".tab").forEach(t => t.onclick = () => {
   if (t.dataset.tab === "pedidos") cargarPedidos();
   if (t.dataset.tab === "ajustes") cargarAjustes();
   if (t.dataset.tab === "portada") cargarPortada();
+  if (t.dataset.tab === "videos") cargarVideos();
 });
 
 /* ---------- productos ---------- */
 $("#fCat").innerHTML += CATEGORIAS.map(c => `<option>${c}</option>`).join("");
 $("#pCat").innerHTML = CATEGORIAS.map(c => `<option>${c}</option>`).join("");
 $("#pMat").innerHTML = MATERIALES.map(c => `<option>${c}</option>`).join("");
+$("#pColores").innerHTML = Object.entries(COLORES).map(([c, h]) => `<label><input type="checkbox" value="${c}"><i style="background:${h}"></i>Oro ${c.toLowerCase()}</label>`).join("");
 const mini = p => p.imagenes?.[0] ? `<span class="mini" style="background-image:url('${esc(p.imagenes[0])}')"></span>` : `<span class="mini">${arte(p.categoria)}</span>`;
 function pintar() {
   const q = $("#filtro").value.toLowerCase(), c = $("#fCat").value;
   const v = [...lista].sort((a, b) => a.orden - b.orden).filter(p => (!c || p.categoria === c) && (!q || p.nombre.toLowerCase().includes(q)));
   $("#resumen").textContent = `${lista.length} productos · ${lista.filter(p => p.activo !== false).length} visibles`;
   $("#lista").innerHTML = v.map(p => `<div class="fila${p.activo === false ? " oculto" : ""}">${mini(p)}
-    <div><b style="font-weight:500">${esc(p.nombre)}</b><small>${pesos(p.precio)}${p.precioAntes ? ` (antes ${pesos(p.precioAntes)})` : ""} · ${esc(p.material)}${p.stock !== null && p.stock !== undefined ? ` · ${p.stock} und.` : ""}</small>
+    <div><b style="font-weight:500">${esc(p.nombre)}</b><small>${pesos(p.precio)}${p.precioAntes ? ` (antes ${pesos(p.precioAntes)})` : ""} · ${esc(p.material)}${p.colores?.length ? " · " + p.colores.join(", ").toLowerCase() : ""}${p.stock !== null && p.stock !== undefined ? ` · ${p.stock} und.` : ""}</small>
     <div class="marcas">${[["nuevo", "Nuevo"], ["destacado", "Tendencia"], ["top", "★ Top"]].map(([k, t]) => `<button data-marca="${k}" data-id="${esc(p.id)}" class="${p[k] ? "on" : ""}">${p[k] ? "✓ " : ""}${t}</button>`).join("")}</div></div>
     <span class="pill">${esc(p.categoria)}${p.stock === 0 ? " · agotado" : ""}${p.activo === false ? " · oculto" : ""}</span>
     <div class="acc"><button data-ago="${esc(p.id)}" class="${p.stock === 0 ? "ago-on" : ""}">${p.stock === 0 ? "✓ Hay de nuevo" : "Agotado"}</button><button data-ed="${esc(p.id)}">Editar</button><button data-del="${esc(p.id)}">Eliminar</button></div></div>`).join("") || `<p class="vacio">Aún no hay productos. Pulsa “+ Nuevo producto”.</p>`;
@@ -209,6 +231,7 @@ function abrir(p) {
   $("#pPrecio").value = p?.precio || ""; $("#pAntes").value = p?.precioAntes || ""; $("#pStock").value = p?.stock ?? "";
   $("#pPeso").value = p?.peso || ""; $("#pMedida").value = p?.medida || ""; $("#pOrden").value = p?.orden || 100; $("#pDesc").value = p?.descripcion || "";
   $("#pActivo").checked = p ? p.activo !== false : true; $("#pNuevo").checked = p ? !!p.nuevo : true; $("#pDest").checked = !!p?.destacado; $("#pTop").checked = !!p?.top;
+  $$("#pColores input").forEach(i => i.checked = (p?.colores || []).includes(i.value));
   fotos = [...(p?.imagenes || [])]; pintarFotos(); $("#eProd").textContent = ""; $("#dlg").showModal();
 }
 $("#nuevo").onclick = () => abrir(); $("#cancelar").onclick = () => $("#dlg").close();
@@ -246,12 +269,84 @@ $("#fProd").onsubmit = async e => {
   const producto = { id: edit?.id || crearId($("#pNombre").value), nombre: $("#pNombre").value.trim(), categoria: $("#pCat").value, material: $("#pMat").value,
     precio: +$("#pPrecio").value, precioAntes: +$("#pAntes").value || 0, stock: $("#pStock").value === "" ? null : +$("#pStock").value,
     peso: $("#pPeso").value.trim(), medida: $("#pMedida").value.trim(), orden: +$("#pOrden").value || 100, descripcion: $("#pDesc").value.trim(),
-    imagenes: fotos, activo: $("#pActivo").checked, nuevo: $("#pNuevo").checked, destacado: $("#pDest").checked, top: $("#pTop").checked };
+    imagenes: fotos, activo: $("#pActivo").checked, nuevo: $("#pNuevo").checked, destacado: $("#pDest").checked, top: $("#pTop").checked, colores: $$("#pColores input:checked").map(i => i.value) };
   if (!producto.nombre || !producto.precio) return $("#eProd").textContent = "Escribe el nombre y el precio.";
   $("#guardar").disabled = true;
   try { const d = await api("guardar", { producto }); const i = lista.findIndex(p => p.id === d.producto.id); if (i >= 0) lista[i] = d.producto; else lista.push(d.producto); $("#dlg").close(); pintar(); }
   catch (err) { $("#eProd").textContent = err.message; }
   $("#guardar").disabled = false;
+};
+
+/* ---------- videos ---------- */
+let videos = [];
+async function cargarVideos() { try { videos = await api("videos"); pintarVideos(); } catch (err) { $("#eVideos").textContent = err.message; } }
+function pintarVideos() {
+  $("#listaVideos").innerHTML = videos.map((v, i) => `<div class="tarj-video${v.activo === false ? " oculto" : ""}" data-i="${i}">
+    <div class="vprev" style="${v.poster ? `background-image:url('${esc(v.poster)}')` : ""}"><button data-play="${i}" aria-label="Ver video">▶</button></div>
+    <input data-tit="${i}" value="${esc(v.titulo)}" maxlength="80" placeholder="Título (opcional)">
+    <label class="mini-check"><input type="checkbox" data-act="${i}" ${v.activo !== false ? "checked" : ""}> Visible</label>
+    <div class="acc"><button data-mov="${i}" data-d="-1" aria-label="Mover antes" ${i ? "" : "disabled"}>◀</button><button data-mov="${i}" data-d="1" aria-label="Mover después" ${i < videos.length - 1 ? "" : "disabled"}>▶</button><button data-delv="${i}">Eliminar</button></div>
+  </div>`).join("") || `<p class="vacio">Aún no hay videos. Pulsa “+ Subir video”.</p>`;
+}
+async function guardarOrden() {
+  try { videos = (await api("ordenar-videos", { videos: videos.map(v => ({ id: v.id, titulo: v.titulo, activo: v.activo })) })).videos; pintarVideos(); }
+  catch (err) { $("#eVideos").textContent = err.message; }
+}
+$("#listaVideos").onclick = async e => {
+  const mv = e.target.closest("[data-mov]"), del = e.target.closest("[data-delv]"), pl = e.target.closest("[data-play]");
+  if (pl) { const v = videos[+pl.dataset.play]; const box = pl.parentElement; box.innerHTML = `<video src="/api/video?id=${esc(v.id)}" controls autoplay playsinline></video>`; }
+  if (mv) { const i = +mv.dataset.mov, j = i + +mv.dataset.d; [videos[i], videos[j]] = [videos[j], videos[i]]; pintarVideos(); guardarOrden(); }
+  if (del) { const v = videos[+del.dataset.delv]; if (!confirm(`¿Eliminar este video${v.titulo ? ` (“${v.titulo}”)` : ""}?`)) return;
+    try { await api("eliminar-video", { id: v.id }); videos = videos.filter(x => x !== v); pintarVideos(); } catch (err) { alert(err.message); } }
+};
+$("#listaVideos").onchange = e => {
+  const t = e.target;
+  if (t.dataset.tit !== undefined) { videos[+t.dataset.tit].titulo = t.value.trim(); guardarOrden(); }
+  if (t.dataset.act !== undefined) { videos[+t.dataset.act].activo = t.checked; guardarOrden(); }
+};
+// Toma una imagen del video para usarla de portada. Si el navegador no puede leer el video, devuelve null.
+function portadaVideo(f) {
+  return new Promise(ok => {
+    const v = document.createElement("video"); v.muted = true; v.playsInline = true; v.preload = "auto";
+    const fin = r => { URL.revokeObjectURL(v.src); ok(r); };
+    const t = setTimeout(() => fin(null), 15000);
+    v.onerror = () => { clearTimeout(t); fin(null); };
+    v.onloadedmetadata = () => { v.currentTime = Math.min(1, (v.duration || 2) / 3); };
+    v.onseeked = () => { clearTimeout(t);
+      if (!v.videoWidth) return fin(null);
+      const s = Math.min(1, 900 / Math.max(v.videoWidth, v.videoHeight)), c = document.createElement("canvas");
+      c.width = Math.round(v.videoWidth * s); c.height = Math.round(v.videoHeight * s); c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+      fin({ base64: c.toDataURL("image/jpeg", .82).split(",")[1], vertical: v.videoHeight >= v.videoWidth, duracion: v.duration }); };
+    v.src = URL.createObjectURL(f);
+  });
+}
+$("#archivoVideo").onchange = async () => {
+  const f = $("#archivoVideo").files[0]; $("#archivoVideo").value = ""; if (!f) return;
+  const err = m => { $("#eVideos").textContent = m; $("#subiendo").hidden = true; };
+  $("#eVideos").textContent = "";
+  if (f.size > 120 * 1024 * 1024) return err(`El video pesa ${Math.round(f.size / 1048576)} MB y el máximo es 120 MB. Recórtalo o envíatelo por WhatsApp (lo comprime) y súbelo de nuevo.`);
+  $("#subiendo").hidden = false; $("#subTxt").textContent = "Preparando el video…"; $("#subBarra").style.width = "0";
+  const tipo = ["video/mp4", "video/webm", "video/quicktime"].includes(f.type) ? f.type : "video/mp4";
+  const port = await portadaVideo(f);
+  if (!port && !confirm("Este navegador no pudo leer el video, así que puede que no se vea en todos los celulares. Lo mejor es subirlo en formato MP4. ¿Subirlo de todas formas?")) return err("");
+  try {
+    let poster = "";
+    if (port) poster = (await api("foto", { tipo: "image/jpeg", base64: port.base64 })).url;
+    const { id, parte } = await api("nuevo-video", { tam: f.size });
+    const partes = Math.ceil(f.size / parte);
+    for (let n = 0; n < partes; n++) {
+      $("#subTxt").textContent = `Subiendo video… ${Math.round(n / partes * 100)}%`;
+      let r, intento = 0;
+      do { r = await fetch(`/api/video-subir?id=${id}&n=${n}`, { method: "POST", headers: { "X-Clave": clave, "Content-Type": "application/octet-stream" }, body: f.slice(n * parte, (n + 1) * parte) }).catch(() => null); }
+      while ((!r || !r.ok) && ++intento < 3);
+      if (!r || !r.ok) throw new Error("Se cortó la subida. Revisa tu conexión e inténtalo de nuevo.");
+      $("#subBarra").style.width = ((n + 1) / partes * 100) + "%";
+    }
+    $("#subTxt").textContent = "Guardando…";
+    const titulo = f.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").slice(0, 80);
+    const d = await api("guardar-video", { video: { id, titulo: /^(vid|img|video|whatsapp|\d)/i.test(titulo) ? "" : titulo, tipo, tam: f.size, poster, vertical: port ? port.vertical : true } });
+    videos.unshift(d.video); pintarVideos(); $("#subiendo").hidden = true;
+  } catch (e) { err(e.message); }
 };
 
 /* ---------- pedidos ---------- */
