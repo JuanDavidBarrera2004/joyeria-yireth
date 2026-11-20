@@ -440,7 +440,35 @@ function relieve(cv) {
   for (let p = 0; p < N; p++) h[p] = Math.min(1, bisel[p] * 1.25) * (.45 + .55 * lum[p]);
   return { gw, gh, h, a };
 }
-const conRelieve = r => { if (r?.recorte) r.recorte.relieve = relieve(r.canvas); return r; };
+// Endereza la pieza: gira el recorte para que su eje largo quede horizontal (las fotos vienen inclinadas)
+function enderezar(cv) {
+  const W = cv.width, Hh = cv.height, d = cv.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, W, Hh).data;
+  let n = 0, mx = 0, my = 0;
+  for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 128) { n++; mx += x; my += y; }
+  if (n < 50) return null;
+  mx /= n; my /= n;
+  let sxx = 0, syy = 0, sxy = 0;
+  for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 128) { const X = x - mx, Y = y - my; sxx += X * X; syy += Y * Y; sxy += X * Y; }
+  const ang = .5 * Math.atan2(2 * sxy, sxx - syy);
+  const tr = (sxx + syy) / 2, df = Math.sqrt(((sxx - syy) / 2) ** 2 + sxy * sxy), alarg = (tr + df) / Math.max(1, tr - df);
+  if (alarg < 1.04 || Math.abs(ang) < .03) return null;          // casi redonda o ya derecha
+  const L = Math.ceil(Math.hypot(W, Hh)), t = document.createElement("canvas"); t.width = L; t.height = L;
+  const c = t.getContext("2d", { willReadFrequently: true });
+  c.translate(L / 2, L / 2); c.rotate(-ang); c.drawImage(cv, -mx, -my);
+  const e = c.getImageData(0, 0, L, L).data; let x0 = L, y0 = L, x1 = 0, y1 = 0;
+  for (let y = 0; y < L; y++) for (let x = 0; x < L; x++) if (e[(y * L + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  const cw = x1 - x0 + 5, ch = y1 - y0 + 5, out = document.createElement("canvas"); out.width = cw; out.height = ch;
+  out.getContext("2d").drawImage(t, x0 - 2, y0 - 2, cw, ch, 0, 0, cw, ch);
+  return { canvas: out, aspecto: cw / ch, ang };
+}
+const conRelieve = r => {
+  if (r?.recorte) {
+    const e = enderezar(r.canvas);
+    if (e) { r.canvas = e.canvas; r.recorte.aspecto = e.aspecto; }
+    r.recorte.relieve = relieve(r.canvas);
+  }
+  return r;
+};
 const CACHE_HERRAJES = new Map();
 export function prepararHerraje(fotos) {
   const clave = (fotos || []).join("|");
