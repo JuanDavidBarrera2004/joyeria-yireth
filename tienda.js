@@ -27,6 +27,41 @@ export async function ajustes() {
   if (!a) VISTA_PREVIA = true;
   return (_aj = a || { ...AJUSTES_BASE, pagos: { tarjeta: true, addi: "vista-previa" } });
 }
+// Promociones activas hoy (Black Friday, etc.), administradas en el panel
+let _promos;
+export async function promociones() {
+  if (_promos) return _promos;
+  return (_promos = (await pedirJSON("/api/promociones")) || []);
+}
+// Ventana de promoción al entrar: una vez por visita, se cierra con la X, Esc o tocando afuera
+async function ventanaPromo() {
+  if (/^\/(carrito|gracias|promociones|admin)/.test(location.pathname)) return;
+  const p = (await promociones()).find(x => x.emergente !== false);
+  if (!p) return;
+  const clave = "yj-promo-vista-" + p.id;
+  try { if (sessionStorage.getItem(clave)) return; } catch {}
+  const mostrar = () => {
+    const intro = document.getElementById("intro");
+    if (intro && !intro.classList.contains("fuera")) return setTimeout(mostrar, 400);
+    try { sessionStorage.setItem(clave, "1"); } catch {}
+    const v = document.createElement("div");
+    v.className = "promo-velo";
+    v.innerHTML = `<div class="promo-caja${p.imagen ? " con-foto" : ""}" role="dialog" aria-modal="true" aria-labelledby="promoTit">
+      <button class="promo-x" type="button" aria-label="Cerrar">&times;</button>
+      ${p.imagen ? `<a class="promo-foto" href="${esc(p.enlace)}"><img src="${esc(p.imagen)}" alt="${esc(p.titulo)}"></a>` : ""}
+      <div class="promo-txt">${p.etiqueta ? `<span class="promo-etq">${esc(p.etiqueta)}</span>` : ""}<h2 id="promoTit">${esc(p.titulo)}</h2>${p.texto ? `<p>${esc(p.texto)}</p>` : ""}
+        ${p.hasta ? `<small>Válido hasta el ${new Date(p.hasta + "T12:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "long" })}</small>` : ""}
+        <a class="btn btn-negro" href="${esc(p.enlace)}">${esc(p.boton || "Ver promociones")}</a></div></div>`;
+    const cerrar = () => { v.classList.remove("ver"); setTimeout(() => v.remove(), 300); document.removeEventListener("keydown", tecla); };
+    const tecla = e => { if (e.key === "Escape") cerrar(); };
+    v.addEventListener("click", e => { if (e.target === v || e.target.closest(".promo-x")) cerrar(); });
+    document.addEventListener("keydown", tecla);
+    document.body.append(v);
+    requestAnimationFrame(() => v.classList.add("ver"));
+    v.querySelector(".promo-x").focus({ preventScroll: true });
+  };
+  setTimeout(mostrar, 900);
+}
 // Las joyas de "Exclusividad" (hechas a clientes) solo se muestran en su página: productos(true) las incluye.
 export async function productos(todas = false) {
   if (!_prods) {
@@ -248,6 +283,7 @@ export async function iniciar() {
   $$("[data-direccion]").forEach(e => e.textContent = a.direccion);
   $$("[data-horario]").forEach(e => e.textContent = a.horario);
   $$("[data-wa]").forEach(el => { el.href = waUrl(a.whatsapp, el.dataset.wa || "¡Hola Joyería Yireth! Quiero información ✨"); el.target = "_blank"; el.rel = "noopener"; });
+  ventanaPromo();
   document.body.insertAdjacentHTML("beforeend", `<a class="wa-flot" href="${waUrl(a.whatsapp, "¡Hola Joyería Yireth! Quiero información ✨")}" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">${ICONO_WA}</a>`);
   return a;
 }

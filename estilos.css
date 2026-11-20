@@ -432,3 +432,30 @@ label.campo{display:grid;gap:6px;font-size:12.5px;letter-spacing:.06em;color:var
 @media(max-width:900px){.sim-lienzo{aspect-ratio:1/1}.sim-vista{position:static}}
 @media(max-width:480px){.sim-lados{grid-template-columns:1fr}}
 .sim-herrajes img.recortada{border-radius:0;object-fit:contain;background:transparent}
+
+/* ---- Ventana de promociones ---- */
+.promo-velo{position:fixed;inset:0;z-index:9000;background:rgba(26,14,12,.62);display:grid;place-items:center;padding:20px;opacity:0;transition:opacity .3s ease}
+.promo-velo.ver{opacity:1}
+.promo-caja{position:relative;background:var(--marfil,#faf7f2);width:min(460px,100%);max-height:calc(100vh - 40px);overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.35);transform:translateY(14px) scale(.98);transition:transform .3s ease;text-align:center}
+.promo-velo.ver .promo-caja{transform:none}
+.promo-caja.con-foto{width:min(520px,100%)}
+.promo-foto{display:block;background:#fff}.promo-foto img{display:block;width:100%;max-height:58vh;object-fit:contain}
+.promo-txt{padding:30px 30px 32px;display:grid;gap:12px;justify-items:center}
+.promo-etq{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:#a3392b;font-weight:500}
+.promo-txt h2{font:500 clamp(26px,4.5vw,34px)/1.1 "Cormorant Garamond",Georgia,serif;margin:0}
+.promo-txt p{color:var(--gris,#6b6460);margin:0;line-height:1.55}
+.promo-txt small{color:var(--gris,#6b6460);font-size:13px}
+.promo-txt .btn{margin-top:6px}
+.promo-x{position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.92);font-size:26px;line-height:1;cursor:pointer;color:#2a1311;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.promo-x:hover{background:#fff}
+/* ---- Página de promociones ---- */
+.promos-lista{display:grid;gap:22px;margin-bottom:56px}
+.promo-tarjeta{display:grid;grid-template-columns:1fr;background:#fff;border:1px solid var(--linea,#e8e0d6);overflow:hidden}
+.promo-tarjeta.con-foto{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
+.promo-tarjeta .pf{background:var(--crema,#f3ece2) center/contain no-repeat;min-height:260px}
+.promo-tarjeta .pt{padding:34px 36px;display:grid;gap:12px;align-content:center}
+.promo-tarjeta h2{font:500 clamp(28px,4vw,40px)/1.1 "Cormorant Garamond",Georgia,serif;margin:0}
+.promo-tarjeta p{color:var(--gris,#6b6460);margin:0;line-height:1.6}
+.promo-tarjeta small{color:#a3392b;font-size:13px;letter-spacing:.04em}
+.promo-tarjeta .btn{justify-self:start;margin-top:6px}
+@media(max-width:760px){.promo-tarjeta.con-foto{grid-template-columns:1fr}.promo-tarjeta .pt{padding:26px 22px}}
