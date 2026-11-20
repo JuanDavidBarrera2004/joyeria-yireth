@@ -153,7 +153,7 @@ export function construirPulsera(cfg) {
   if (izq.length || der.length || cfg.herraje) items.push({ tipo: "remate", d: 2.6 });
   for (const d of [...izq].reverse()) items.push({ tipo: "balin", d });
   const rec = cfg.herraje && cfg.herraje.recorte;                 // { aspecto } cuando se pudo quitar el fondo
-  const hAlto = rec ? 17 : 14, hAncho = rec ? Math.min(20, hAlto * rec.aspecto) : 14;
+  const hAlto = rec ? Math.min(17, 24 / rec.aspecto) : 14, hAncho = rec ? hAlto * rec.aspecto : 14;   // respeta la proporción real de la joya
   const punta = rec ? hAncho / 2 : 7;                              // media anchura hasta la punta del herraje
   const AMARRE = 3.6;                                              // argolla + lazo de hilo + nudo en cada punta
   if (cfg.herraje) items.push({ tipo: "herraje", d: 2 * (punta + AMARRE) + .4 });
@@ -289,9 +289,16 @@ void main(){
     float sh=pow(1.0-max(dot(N,V),0.0),2.0)*0.22;
     c = base*d + sh*mix(base,vec3(1.0),0.6) + vec3(pow(max(dot(reflect(-L1,N),V),0.0),24.0)*0.06);
   } else if(uModo==4){
-    if(texture(uTex,vU).a<0.45) discard;
+    vec4 tx=texture(uTex,vU);
+    if(tx.a<0.45) discard;
     vec3 Rf=reflect(-V,N);
-    c = base*(0.08+0.25*max(dot(N,L1),0.0)) + base*ent(Rf)*0.8;
+    float mxc=max(tx.r,max(tx.g,tx.b)), mnc=min(tx.r,min(tx.g,tx.b)), sat=(mxc-mnc)/max(mxc,0.01), lum=dot(tx.rgb,vec3(0.3,0.55,0.15));
+    float piedra = 0.0;
+    float sp=pow(max(dot(Rf,L1),0.0),90.0)*2.2+pow(max(dot(Rf,L2),0.0),60.0)*0.9;
+    vec3 metal = (base*(0.06+0.22*max(dot(N,L1),0.0)) + base*ent(Rf)*0.95 + mix(base,vec3(1.0),0.45)*sp) * (uTexOk>0.5 ? 0.55+0.75*lum : 1.0);
+    float bri=fract(sin(dot(floor(vU*vec2(160.0,90.0)),vec2(12.9898,78.233)))*43758.5453);
+    vec3 circon = vec3(0.78,0.8,0.84)*(0.35+0.65*max(dot(N,L1),0.0)) + vec3(1.0)*pow(max(dot(Rf,L1),0.0),20.0)*2.0*bri + vec3(0.6)*step(0.93,bri);
+    c = mix(metal, circon, piedra);
   } else {
     vec4 tx = texture(uTex,vU);
     if(uModo==5 && tx.a<0.45) discard;
@@ -317,7 +324,7 @@ function analizar(img, max = 480) {
   for (let y = 0; y < h; y += 2) borde.push((y * w) * 4, (y * w + w - 1) * 4);
   let m = [0, 0, 0]; for (const i of borde) { m[0] += d.data[i]; m[1] += d.data[i + 1]; m[2] += d.data[i + 2]; } m = m.map(v => v / borde.length);
   let dev = 0; for (const i of borde) dev += Math.hypot(d.data[i] - m[0], d.data[i + 1] - m[1], d.data[i + 2] - m[2]); dev /= borde.length;
-  return { cv, cx, d, w, h, fondo: m, dev, claro: (m[0] + m[1] + m[2]) / 3 };
+  return { cv, cx, d, w, h, k, fondo: m, dev, claro: (m[0] + m[1] + m[2]) / 3 };
 }
 function recortarFondo(a) {
   const { d, w, h, fondo } = a, px = d.data, T1 = 34, T2 = 62;
@@ -378,7 +385,7 @@ function recortarFondo(a) {
   const pad = 4; x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
   const cw = x1 - x0 + 1, ch = y1 - y0 + 1, out = document.createElement("canvas"); out.width = cw; out.height = ch;
   out.getContext("2d").drawImage(a.cv, x0, y0, cw, ch, 0, 0, cw, ch);
-  return { canvas: out, recorte: { aspecto: cw / ch } };
+  return { canvas: out, recorte: { aspecto: cw / ch }, caja: [x0 / a.k, y0 / a.k, cw / a.k, ch / a.k] };
 }
 // Segundo método: encuentra el oro por su color, rellena las piedras encerradas y se queda con la pieza más grande
 function recortarOro(a) {
@@ -422,7 +429,7 @@ function recortarOro(a) {
   const pad = 3; x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
   const cw = x1 - x0 + 1, ch = y1 - y0 + 1, out = document.createElement("canvas"); out.width = cw; out.height = ch;
   const oc = out.getContext("2d"); oc.drawImage(a.cv, x0, y0, cw, ch, 0, 0, cw, ch);
-  return { canvas: out, recorte: { aspecto: cw / ch } };
+  return { canvas: out, recorte: { aspecto: cw / ch }, caja: [x0 / a.k, y0 / a.k, cw / a.k, ch / a.k] };
 }
 
 // Convierte el recorte en un mapa de relieve: la silueta da la forma y el brillo de la foto da el grabado
@@ -475,17 +482,26 @@ export function prepararHerraje(fotos) {
   if (!CACHE_HERRAJES.has(clave)) CACHE_HERRAJES.set(clave, procesarHerraje(fotos).then(conRelieve));
   return CACHE_HERRAJES.get(clave);
 }
+// Segunda pasada: recorta la zona de la joya en la foto original y la vuelve a separar con mucho más detalle
+function afinar(img, caja, metodo) {
+  const [x, y, w, h] = caja, mg = Math.max(w, h) * .35;
+  const X0 = Math.max(0, x - mg), Y0 = Math.max(0, y - mg), X1 = Math.min(img.width, x + w + mg), Y1 = Math.min(img.height, y + h + mg);
+  const cv = document.createElement("canvas"); cv.width = Math.round(X1 - X0); cv.height = Math.round(Y1 - Y0);
+  cv.getContext("2d").drawImage(img, X0, Y0, X1 - X0, Y1 - Y0, 0, 0, cv.width, cv.height);
+  const r = metodo(analizar(cv, 560));
+  return r && r.canvas.width > caja[2] * .5 ? r : null;
+}
 async function procesarHerraje(fotos) {
   const imgs = (await Promise.all(fotos.slice(0, 4).map(cargarImg))).filter(Boolean);
   if (!imgs.length) return null;
   // se prueba primero la foto con el fondo más parejo
-  const an = imgs.map(i => analizar(i, 640)).sort((x, y) => x.dev - y.dev);
+  const an = imgs.map(i => ({ ...analizar(i, 640), img: i })).sort((x, y) => x.dev - y.dev);
   for (const a of an) {
     if (a.dev > 26 || a.claro < 150) continue;   // solo fotos con fondo claro y parejo
     const r = recortarFondo(a);
-    if (r) return r;
+    if (r) return afinar(a.img, r.caja, recortarFondo) || afinar(a.img, r.caja, recortarOro) || r;
   }
-  for (const i of imgs) { const r = recortarOro(analizar(i, 640)); if (r) return r; }
+  for (const i of imgs) { const r = recortarOro(analizar(i, 640)); if (r) return afinar(i, r.caja, recortarOro) || r; }
   // si no se pudo separar la joya: medallón con la foto
   const img = imgs[0], cv = document.createElement("canvas"); cv.width = cv.height = 512; const cx = cv.getContext("2d");
   const k = Math.max(512 / img.width, 512 / img.height) * 1.12, w = img.width * k, h = img.height * k;
