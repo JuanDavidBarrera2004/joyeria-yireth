@@ -1,7 +1,7 @@
 // POST /api/admin → acciones del panel (requiere ADMIN_PASSWORD)
 import {
   json, leerProductos, guardarProductos, limpiarProducto, claveCorrecta,
-  leerAjustes, limpiarAjustes, leerPedido, guardarPedido, aleatorio, leerBanners, limpiarBanner,
+  leerAjustes, limpiarAjustes, leerPedido, guardarPedido, aleatorio, leerBanners, limpiarBanner, leerPromos, limpiarPromo,
   leerVideos, limpiarVideo, idVideoOk, PARTE_VIDEO, MAX_VIDEO,
 } from "../../lib/comun.js";
 
@@ -51,6 +51,15 @@ export async function onRequestPost({ env, request }) {
       const lista = (Array.isArray(d.banners) ? d.banners : []).slice(0, 10).map(limpiarBanner).filter(Boolean);
       await env.TIENDA.put("banners", JSON.stringify(lista));
       return json(200, { ok: true, banners: lista });
+    }
+
+    case "promociones":
+      return json(200, await leerPromos(env));
+
+    case "guardar-promociones": {
+      const lista = (Array.isArray(d.promociones) ? d.promociones : []).slice(0, 12).map(limpiarPromo).filter(Boolean);
+      await env.TIENDA.put("promociones", JSON.stringify(lista));
+      return json(200, { ok: true, promociones: lista });
     }
 
     case "videos":
