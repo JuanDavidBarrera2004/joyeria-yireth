@@ -84,6 +84,7 @@ const P = new URLSearchParams(location.search);
 const id = P.get("pedido"), t = P.get("t"), tx = P.get("id");
 const caja = $("#caja");
 const wa = id => `<a class="btn btn-wa" href="${waUrl(aj.whatsapp, `¡Hola! Tengo una pregunta sobre mi pedido ${id}`)}" target="_blank" rel="noopener">Escribir por WhatsApp</a>`;
+const lista = d => d.items?.length ? `<ul style="list-style:none;padding:0;margin:14px auto;max-width:420px;text-align:left;border-top:1px solid var(--linea)">${d.items.map(i => `<li style="padding:8px 0;border-bottom:1px solid var(--linea)">${i.cantidad} × ${esc(i.nombre)}</li>`).join("")}</ul>` : "";
 if (P.get("wa")) {
   caja.innerHTML = `<span class="sup">Pedido ${esc(id)}</span><h1>¡Gracias por tu pedido!</h1><p>Te abrimos WhatsApp para confirmar el pago. Si no se abrió, escríbenos con tu número de pedido.</p><div class="hero-btns" style="justify-content:center">${wa(id)}<a class="btn btn-borde" href="/tienda">Seguir comprando</a></div>`;
 } else if (id && t) {
@@ -94,11 +95,11 @@ if (P.get("wa")) {
     if (!d) { caja.innerHTML = `<h1>No encontramos tu pedido</h1><p>Escríbenos y lo revisamos.</p><div class="hero-btns" style="justify-content:center">${wa(id)}</div>`; return; }
     if (d.estado === "pagado") {
       Carrito.vaciar();
-      caja.innerHTML = `<span class="sup">Pedido ${esc(d.id)}</span><h1>¡Pago confirmado!</h1><p>Gracias por comprar en Joyería Yireth. Total: ${pesos(d.total)}. Te contactaremos por WhatsApp para coordinar el envío.</p><div class="hero-btns" style="justify-content:center">${wa(d.id)}<a class="btn btn-borde" href="/tienda">Seguir comprando</a></div>`;
+      caja.innerHTML = `<span class="sup">Pedido ${esc(d.id)}</span><h1>¡Pago confirmado!</h1>${lista(d)}<p>Gracias por comprar en Joyería Yireth. Total: ${pesos(d.total)}. Te contactaremos por WhatsApp para coordinar el envío.</p><div class="hero-btns" style="justify-content:center">${wa(d.id)}<a class="btn btn-borde" href="/tienda">Seguir comprando</a></div>`;
     } else if (d.estado === "rechazado") {
       caja.innerHTML = `<span class="sup">Pedido ${esc(d.id)}</span><h1>El pago no se completó</h1><p>${d.metodo === "addi" ? "Addi no aprobó la solicitud o se canceló." : "La transacción fue rechazada o cancelada."} Tus joyas siguen en el carrito para que intentes con otro medio de pago.</p><div class="hero-btns" style="justify-content:center"><a class="btn btn-negro" href="/carrito">Intentar de nuevo</a>${wa(d.id)}</div>`;
     } else if (++intentos < 8) { setTimeout(revisar, 4000); }
-    else caja.innerHTML = `<span class="sup">Pedido ${esc(d.id)}</span><h1>Pago en proceso</h1><p>${d.metodo === "addi" ? "Addi está revisando tu solicitud." : "Tu pago está en verificación."} Te avisaremos por WhatsApp apenas se confirme.</p><div class="hero-btns" style="justify-content:center">${wa(d.id)}</div>`;
+    else caja.innerHTML = `<span class="sup">Pedido ${esc(d.id)}</span><h1>Pago en proceso</h1>${lista(d)}<p>${d.metodo === "addi" ? "Addi está revisando tu solicitud." : "Tu pago está en verificación."} Te avisaremos por WhatsApp apenas se confirme.</p><div class="hero-btns" style="justify-content:center">${wa(d.id)}</div>`;
   }
   revisar();
 } else caja.innerHTML = `<h1>Gracias por visitarnos</h1><div class="hero-btns" style="justify-content:center"><a class="btn btn-negro" href="/tienda">Ver la joyería</a></div>`;
