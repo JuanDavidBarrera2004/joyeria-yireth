@@ -458,7 +458,7 @@ function enderezar(cv) {
   for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 128) { const X = x - mx, Y = y - my; sxx += X * X; syy += Y * Y; sxy += X * Y; }
   const ang = .5 * Math.atan2(2 * sxy, sxx - syy);
   const tr = (sxx + syy) / 2, df = Math.sqrt(((sxx - syy) / 2) ** 2 + sxy * sxy), alarg = (tr + df) / Math.max(1, tr - df);
-  if (alarg < 1.04 || Math.abs(ang) < .03) return null;          // casi redonda o ya derecha
+  if (alarg < 1.04 || Math.abs(ang) < .03 || Math.abs(ang) > .7) return null;   // casi redonda, ya derecha, o pieza vertical (no se acuesta)
   const L = Math.ceil(Math.hypot(W, Hh)), t = document.createElement("canvas"); t.width = L; t.height = L;
   const c = t.getContext("2d", { willReadFrequently: true });
   c.translate(L / 2, L / 2); c.rotate(-ang); c.drawImage(cv, -mx, -my);
