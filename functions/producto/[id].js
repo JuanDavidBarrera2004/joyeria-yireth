@@ -14,11 +14,11 @@ export async function onRequestGet({ env, params, request }) {
     });
   }
   const img = p.imagenes?.[0] ? (p.imagenes[0].startsWith("/") ? origen + p.imagenes[0] : p.imagenes[0]) : origen + "/img/compartir.png";
-  const desc = (p.descripcion || `${p.nombre} en ${p.material}${p.peso ? ", " + p.peso : ""}${p.medida ? ", " + p.medida : ""}.`).slice(0, 155) + " Paga con tarjeta o a cuotas con Addi.";
+  const desc = (p.descripcion || `${p.nombre}${p.material ? " en " + p.material : ""}${p.peso ? ", " + p.peso : ""}${p.medida ? ", " + p.medida : ""}.`).slice(0, 155) + " Paga con tarjeta o a cuotas con Addi.";
   const url = `${origen}/producto/${p.id}`;
   const datos = {
     "@context": "https://schema.org", "@type": "Product", name: p.nombre, image: [img], description: desc,
-    sku: p.id, brand: { "@type": "Brand", name: "Joyería Yireth" }, category: p.categoria, material: p.material,
+    sku: p.id, brand: { "@type": "Brand", name: "Joyería Yireth" }, category: p.categoria, material: p.material || undefined,
     ...(p.precio ? { offers: { "@type": "Offer", url, priceCurrency: "COP", price: p.precio,
       availability: p.stock === 0 ? "https://schema.org/OutOfStock" : "https://schema.org/InStock" } } : {}),
   };
