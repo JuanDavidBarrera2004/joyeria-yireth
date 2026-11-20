@@ -16,8 +16,8 @@ export async function onRequestPost({ env, request }) {
 
   const t = ev.data?.transaction;
   if (ev.event !== "transaction.updated" || !t) return json(200, { ok: true });
-  const p = await leerPedido(env, t.reference);
-  if (!p || t.amount_in_cents !== p.total * 100) return json(200, { ok: true });
+  const p = await leerPedido(env, String(t.reference || "").split("-")[0]);
+  if (!p || t.reference !== (p.ref || p.id) || t.amount_in_cents !== p.total * 100) return json(200, { ok: true });
 
   if (t.status === "APPROVED") await marcarPagado(env, p, { via: "wompi", transaccion: t.id, medio: t.payment_method_type });
   else if (["DECLINED", "ERROR", "VOIDED"].includes(t.status) && p.estado === "pendiente") {

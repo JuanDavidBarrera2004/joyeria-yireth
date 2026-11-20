@@ -67,12 +67,15 @@ export async function onRequestPost({ env, request }) {
   // ---- Tarjeta, PSE y Nequi con Wompi ----
   if (metodo === "tarjeta") {
     if (!wompiActivo(env)) return json(400, { error: "El pago con tarjeta todavía no está activo. Elige otra opción." });
+    // la referencia lleva el número de pedido y el nombre de la joya, para verla en Wompi y en el comprobante
+    const resumen = sinTildes(items[0].nombre + (items.length > 1 ? ` y ${items.length - 1} mas` : "")).toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "");
+    pedido.ref = (pedido.id + "-" + resumen).slice(0, 64).replace(/-$/, "");
     await guardarPedido(env, pedido);
     const cents = String(total * 100);
-    const firma = await sha256(pedido.id + cents + "COP" + env.WOMPI_INTEGRITY_SECRET);
+    const firma = await sha256(pedido.ref + cents + "COP" + env.WOMPI_INTEGRITY_SECRET);
     const q = new URLSearchParams({
       "public-key": env.WOMPI_PUBLIC_KEY, currency: "COP", "amount-in-cents": cents,
-      reference: pedido.id, "signature:integrity": firma,
+      reference: pedido.ref, "signature:integrity": firma,
       "redirect-url": `${origen}/gracias?pedido=${pedido.id}&t=${pedido.token}`,
       "customer-data:email": cliente.correo,
       "customer-data:full-name": `${cliente.nombre} ${cliente.apellido}`,
@@ -143,7 +146,7 @@ export async function onRequestGet({ env, request }) {
     try {
       const r = await fetch(`${wompiApi(env)}/transactions/${tx}`);
       const t = (await r.json()).data;
-      if (t && t.reference === p.id && t.amount_in_cents === p.total * 100) {
+      if (t && t.reference === (p.ref || p.id) && t.amount_in_cents === p.total * 100) {
         if (t.status === "APPROVED") await marcarPagado(env, p, { via: "wompi", transaccion: t.id, medio: t.payment_method_type });
         else if (["DECLINED", "ERROR", "VOIDED"].includes(t.status)) { p.estado = "rechazado"; p.pago = { via: "wompi", transaccion: t.id, estado: t.status }; await guardarPedido(env, p); }
       }
