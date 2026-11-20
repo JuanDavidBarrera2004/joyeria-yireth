@@ -201,8 +201,26 @@ export function construirPulsera(cfg) {
         const uA = [flip ? 1 : 0, 0], uB = [flip ? 0 : 1, 0], uC = [flip ? 0 : 1, 1], uD = [flip ? 1 : 0, 1];
         tri(m, A, D, C, n, n, n, uA, uD, uC); tri(m, A, C, B, n, n, n, uA, uC, uB);
       };
-      q(foto, cf, f.r, false);
-      q(silueta, cb, v3.mul(f.r, -1), false);
+      if (rec.relieve) {
+        // pieza dorada con relieve (igual que los balines: metal que cambia con el color del oro)
+        const { gw, gh, h, a } = rec.relieve, prof = 1.7, base = v3.add(f.p, v3.mul(f.r, 1.0));
+        const H = (i, j) => h[Math.min(gh - 1, Math.max(0, j)) * gw + Math.min(gw - 1, Math.max(0, i))];
+        const pos = (i, j) => { const u = i / (gw - 1), v = j / (gh - 1); return v3.add(v3.add(v3.add(base, v3.mul(ex, 2 * u - 1)), v3.mul(ey, 1 - 2 * v)), v3.mul(f.r, H(i, j) * prof)); };
+        const nor = (i, j) => {
+          const du = (H(i + 1, j) - H(i - 1, j)) / 2 * prof / (2 * hAncho / (gw - 1)), dv = (H(i, j + 1) - H(i, j - 1)) / 2 * prof / (2 * hAlto / (gh - 1));
+          return v3.norm(v3.add(v3.add(f.r, v3.mul(f.t, -du)), v3.mul(f.u, dv)));
+        };
+        const uv = (i, j) => [i / (gw - 1), j / (gh - 1)];
+        for (let j = 0; j < gh - 1; j++) for (let i = 0; i < gw - 1; i++) {
+          if (Math.max(a[j * gw + i], a[j * gw + i + 1], a[(j + 1) * gw + i], a[(j + 1) * gw + i + 1]) < .3) continue;
+          tri(silueta, pos(i, j), pos(i, j + 1), pos(i + 1, j + 1), nor(i, j), nor(i, j + 1), nor(i + 1, j + 1), uv(i, j), uv(i, j + 1), uv(i + 1, j + 1));
+          tri(silueta, pos(i, j), pos(i + 1, j + 1), pos(i + 1, j), nor(i, j), nor(i + 1, j + 1), nor(i + 1, j), uv(i, j), uv(i + 1, j + 1), uv(i + 1, j));
+        }
+        q(silueta, v3.add(f.p, v3.mul(f.r, .8)), v3.mul(f.r, -1), false);
+      } else {
+        q(foto, cf, f.r, false);
+        q(silueta, cb, v3.mul(f.r, -1), false);
+      }
       for (const lado of [-1, 1]) toro(oro, v3.add(f.p, v3.mul(f.t, lado * (hAncho / 2 + 1.4))), f.t, f.r, 1.5, .45, 24, 10);
     }
     else if (it.tipo === "herraje") {
@@ -386,10 +404,26 @@ function recortarOro(a) {
   return { canvas: out, recorte: { aspecto: cw / ch } };
 }
 
+// Convierte el recorte en un mapa de relieve: la silueta da la forma y el brillo de la foto da el grabado
+function relieve(cv) {
+  const gw = 200, gh = Math.max(24, Math.min(300, Math.round(gw * cv.height / cv.width)));
+  const t = document.createElement("canvas"); t.width = gw; t.height = gh;
+  const cx = t.getContext("2d", { willReadFrequently: true }); cx.drawImage(cv, 0, 0, gw, gh);
+  const d = cx.getImageData(0, 0, gw, gh).data, N = gw * gh;
+  const a = new Float32Array(N), l = new Float32Array(N);
+  let mn = 1, mx = 0;
+  for (let p = 0; p < N; p++) { a[p] = d[p * 4 + 3] / 255; if (a[p] > .5) { l[p] = (d[p * 4] * .3 + d[p * 4 + 1] * .55 + d[p * 4 + 2] * .15) / 255; mn = Math.min(mn, l[p]); mx = Math.max(mx, l[p]); } }
+  const borrar = (src, veces) => { let x = src; for (let k = 0; k < veces; k++) { const o = new Float32Array(N); for (let y = 0; y < gh; y++) for (let X = 0; X < gw; X++) { let s = 0, c = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = X + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < gw && yy < gh) { s += x[yy * gw + xx]; c++; } } o[y * gw + X] = s / c; } x = o; } return x; };
+  const bisel = borrar(a, 3), lum = borrar(l.map((v, p) => a[p] > .5 ? (v - mn) / Math.max(.05, mx - mn) : 0), 1);
+  const h = new Float32Array(N);
+  for (let p = 0; p < N; p++) h[p] = Math.min(1, bisel[p] * 1.25) * (.45 + .55 * lum[p]);
+  return { gw, gh, h, a };
+}
+const conRelieve = r => { if (r?.recorte) r.recorte.relieve = relieve(r.canvas); return r; };
 const CACHE_HERRAJES = new Map();
 export function prepararHerraje(fotos) {
   const clave = (fotos || []).join("|");
-  if (!CACHE_HERRAJES.has(clave)) CACHE_HERRAJES.set(clave, procesarHerraje(fotos));
+  if (!CACHE_HERRAJES.has(clave)) CACHE_HERRAJES.set(clave, procesarHerraje(fotos).then(conRelieve));
   return CACHE_HERRAJES.get(clave);
 }
 async function procesarHerraje(fotos) {
