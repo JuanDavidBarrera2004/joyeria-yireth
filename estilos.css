@@ -459,3 +459,8 @@ label.campo{display:grid;gap:6px;font-size:12.5px;letter-spacing:.06em;color:var
 .promo-tarjeta small{color:#a3392b;font-size:13px;letter-spacing:.04em}
 .promo-tarjeta .btn{justify-self:start;margin-top:6px}
 @media(max-width:760px){.promo-tarjeta.con-foto{grid-template-columns:1fr}.promo-tarjeta .pt{padding:26px 22px}}
+.promo-minis{display:flex;gap:8px;justify-content:center;margin-top:4px}
+.promo-minis a{width:64px;height:64px;border:1px solid var(--linea,#e8e0d6);background:#fff;overflow:hidden}
+.promo-minis img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}.promo-minis a:hover img{transform:scale(1.06)}
+.promo-joyas{margin:-6px 0 34px}
+.promo-joyas>h3{font:500 22px "Cormorant Garamond",Georgia,serif;margin:0 0 14px}

@@ -83,16 +83,27 @@
 </footer>
 <script type="module">
 
-import { iniciar, productos, promociones, pintarRejilla, esc } from "/tienda.js";
+import { iniciar, productos, promociones, pintarRejilla, esc, joyasDePromo, disponible } from "/tienda.js";
 iniciar();
 const fecha = f => new Date(f + "T12:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "long" });
 const [lista, ps] = await Promise.all([promociones(), productos()]);
-document.getElementById("promos").innerHTML = lista.map(p => `<article class="promo-tarjeta${p.imagen ? " con-foto" : ""}" id="p-${esc(p.id)}">
+const mostradas = new Set();
+document.getElementById("promos").innerHTML = lista.map(p => `<div><article class="promo-tarjeta${p.imagen ? " con-foto" : ""}" id="p-${esc(p.id)}">
   ${p.imagen ? `<div class="pf" style="background-image:url('${esc(p.imagen)}')" role="img" aria-label="${esc(p.titulo)}"></div>` : ""}
   <div class="pt">${p.etiqueta ? `<span class="sup">${esc(p.etiqueta)}</span>` : ""}<h2>${esc(p.titulo)}</h2>${p.texto ? `<p>${esc(p.texto)}</p>` : ""}
   ${p.hasta ? `<small>Válido hasta el ${fecha(p.hasta)}</small>` : ""}
-  ${p.enlace && p.enlace !== "/promociones" ? `<a class="btn btn-negro" href="${esc(p.enlace)}">${esc(p.boton || "Ver más")}</a>` : ""}</div></article>`).join("");
-const ofertas = ps.filter(p => p.precioAntes && p.precioAntes > p.precio);
+  ${p.enlace && p.enlace !== "/promociones" ? `<a class="btn btn-negro" href="${esc(p.enlace)}">${esc(p.boton || "Ver más")}</a>` : ""}</div></article>
+  <div class="promo-joyas" data-promo="${esc(p.id)}" hidden><h3></h3><div class="rejilla"></div></div></div>`).join("");
+for (const p of lista) {
+  const joyas = joyasDePromo(p, ps);
+  if (!joyas.length) continue;
+  joyas.forEach(j => mostradas.add(j.id));
+  const caja = document.querySelector(`[data-promo="${CSS.escape(p.id)}"]`);
+  caja.hidden = false;
+  caja.querySelector("h3").textContent = `${joyas.length} ${joyas.length === 1 ? "joya disponible" : "joyas disponibles"} en esta promoción`;
+  pintarRejilla(caja.querySelector(".rejilla"), joyas);
+}
+const ofertas = ps.filter(p => disponible(p) && p.precioAntes && p.precioAntes > p.precio && !mostradas.has(p.id));
 if (!lista.length && !ofertas.length) {
   document.getElementById("cabOfertas").remove();
   document.getElementById("gOfertas").outerHTML = `<div style="text-align:center;padding:30px 0 10px"><p style="color:var(--gris);margin-bottom:18px">En este momento no tenemos promociones activas. Síguenos en redes para enterarte de las próximas.</p><a class="btn btn-negro" href="/tienda">Ver la joyería</a></div>`;

@@ -33,6 +33,9 @@ export async function promociones() {
   if (_promos) return _promos;
   return (_promos = (await pedirJSON("/api/promociones")) || []);
 }
+// Joyas disponibles (visibles y no agotadas) que entran en una promoción
+export const disponible = p => p.activo !== false && p.stock !== 0;
+export const joyasDePromo = (promo, lista) => lista.filter(p => disponible(p) && ((promo.productos || []).includes(p.id) || (promo.categorias || []).includes(p.categoria)));
 // Ventana de promoción al entrar: una vez por visita, se cierra con la X, Esc o tocando afuera
 async function ventanaPromo() {
   if (/^\/(carrito|gracias|promociones|admin)/.test(location.pathname)) return;
@@ -40,6 +43,7 @@ async function ventanaPromo() {
   if (!p) return;
   const clave = "yj-promo-vista-" + p.id;
   try { if (sessionStorage.getItem(clave)) return; } catch {}
+  const joyas = (p.productos?.length || p.categorias?.length) ? joyasDePromo(p, await productos()).filter(j => j.imagenes?.length) : [];
   const mostrar = () => {
     const intro = document.getElementById("intro");
     if (intro && !intro.classList.contains("fuera")) return setTimeout(mostrar, 400);
@@ -50,6 +54,7 @@ async function ventanaPromo() {
       <button class="promo-x" type="button" aria-label="Cerrar">&times;</button>
       ${p.imagen ? `<a class="promo-foto" href="${esc(p.enlace)}"><img src="${esc(p.imagen)}" alt="${esc(p.titulo)}"></a>` : ""}
       <div class="promo-txt">${p.etiqueta ? `<span class="promo-etq">${esc(p.etiqueta)}</span>` : ""}<h2 id="promoTit">${esc(p.titulo)}</h2>${p.texto ? `<p>${esc(p.texto)}</p>` : ""}
+        ${joyas.length ? `<div class="promo-minis">${joyas.slice(0, 4).map(j => `<a href="/producto/${esc(j.id)}" title="${esc(j.nombre)}"><img src="${esc(j.imagenes[0])}" alt="${esc(j.nombre)}" loading="lazy"></a>`).join("")}</div><small>${joyas.length} ${joyas.length === 1 ? "joya disponible" : "joyas disponibles"} en esta promoción</small>` : ""}
         ${p.hasta ? `<small>Válido hasta el ${new Date(p.hasta + "T12:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "long" })}</small>` : ""}
         <a class="btn btn-negro" href="${esc(p.enlace)}">${esc(p.boton || "Ver promociones")}</a></div></div>`;
     const cerrar = () => { v.classList.remove("ver"); setTimeout(() => v.remove(), 300); document.removeEventListener("keydown", tecla); };

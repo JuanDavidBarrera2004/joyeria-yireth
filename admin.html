@@ -43,6 +43,14 @@
   .foto .pri{position:absolute;left:2px;bottom:2px;font-size:10px;background:var(--tinta);color:#fff;padding:1px 5px}
   .subir{width:88px;height:88px;border:1px dashed var(--tenue);display:grid;place-items:center;text-align:center;font-size:12px;color:var(--gris);cursor:pointer;background:#fff}
   .papelera{display:grid;place-items:center;color:#a3392b!important;border-color:#e8c4bd!important}.papelera svg{width:17px;height:17px}.papelera:hover{background:#fbeeeb!important}
+  .pjoyas{background:var(--crema);padding:12px 14px;display:grid;gap:10px;font-size:14px}.pjoyas .nota{color:var(--gris);font-size:12.5px}
+  .pcats{display:flex;flex-wrap:wrap;gap:6px 14px}.pcats label{display:flex;gap:6px;align-items:center;font-size:13px}
+  .pbusca{position:relative}.pbusca input{width:100%;padding:10px 12px;border:1px solid var(--linea);background:#fff;font:inherit}
+  .pres{display:grid;background:#fff;border:1px solid var(--linea);border-top:0}.pres:empty{display:none}
+  .pres button{display:flex;gap:10px;align-items:center;text-align:left;padding:7px 10px;border:0;border-bottom:1px solid var(--linea);background:#fff;cursor:pointer;font:inherit}.pres button:hover{background:var(--marfil)}
+  .pres img,.pchip img{width:34px;height:34px;object-fit:cover}.pres small{display:block;color:var(--gris);font-size:12px}
+  .pelegidas{display:flex;flex-wrap:wrap;gap:6px}.pchip{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--linea);padding:3px 4px 3px 3px;font-size:13px}
+  .pchip.no{opacity:.55}.pchip button{border:0;background:none;font-size:18px;line-height:1;cursor:pointer;color:#a3392b;padding:0 6px}
   .btn-borrar{display:inline-flex;gap:8px;align-items:center;background:#fff;color:#a3392b;border:1px solid #e8c4bd}.btn-borrar svg{width:16px;height:16px}.btn-borrar:hover{background:#fbeeeb}
   #campoSub[hidden],#notaExcl[hidden]{display:none}
   .sello-admin{align-self:center;margin-left:14px;padding:5px 10px;border:1px solid var(--oro);color:var(--oro-osc);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;white-space:nowrap}
@@ -531,7 +539,9 @@ $("#archivoDiap").onchange = async () => {
 let promos = [], subirPromo = null;
 const hoyCo = () => new Date(Date.now() - 5 * 3600e3).toISOString().slice(0, 10);
 const estadoPromo = p => p.activo === false ? ["Apagada", "#8a8a8a"] : p.hasta && p.hasta < hoyCo() ? ["Terminó", "#a3392b"] : p.desde && p.desde > hoyCo() ? ["Programada", "#9a6b12"] : ["Activa ahora", "#1d6b35"];
-async function cargarPromos() { try { promos = await api("promociones"); pintarPromos(); } catch (err) { $("#ePromos").textContent = err.message; } }
+const dispo = x => x.activo !== false && x.stock !== 0;
+const nDisp = p => { const n = lista.filter(x => dispo(x) && ((p.productos || []).includes(x.id) || (p.categorias || []).includes(x.categoria))).length; return n ? `<b style="color:#1d6b35">${n} ${n === 1 ? "joya disponible" : "joyas disponibles"}</b>` : "Escoge categorías completas o busca joyas una por una."; };
+async function cargarPromos() { try { if (!lista.length) lista = await api("listar"); promos = await api("promociones"); pintarPromos(); } catch (err) { $("#ePromos").textContent = err.message; } }
 const campoP = (i, k, label, ph = "", max = 60, tipo = "text") => `<label class="campo">${label}<input type="${tipo}" data-pi="${i}" data-pk="${k}" value="${esc(promos[i][k] || "")}" placeholder="${ph}" maxlength="${max}"></label>`;
 function pintarPromos() {
   $("#promos").innerHTML = promos.map((p, i) => { const [est, col] = estadoPromo(p); return `<div class="diap${p.activo === false ? " off" : ""}">
@@ -543,14 +553,36 @@ function pintarPromos() {
       ${campoP(i, "texto", "Texto (opcional)", "Solo este fin de semana, en tienda y en línea.", 240)}
       <div class="g2">${campoP(i, "boton", "Texto del botón", "Ver promociones", 30)}${campoP(i, "enlace", "El botón lleva a", "/promociones", 200)}</div>
       <div class="g2">${campoP(i, "desde", "Empieza (opcional)", "", 10, "date")}${campoP(i, "hasta", "Termina (opcional)", "", 10, "date")}</div>
+      <div class="pjoyas">
+        <b>Joyas de la promoción</b> <span class="nota">Solo se muestran las disponibles (visibles y no agotadas). ${nDisp(p)}</span>
+        <div class="pcats">${CATEGORIAS.filter(c => c !== "Exclusividad").map(c => `<label><input type="checkbox" data-pcat="${i}" value="${esc(c)}"${(p.categorias || []).includes(c) ? " checked" : ""}> ${esc(c === "Dijes y herrajes" ? "Dijes" : c)}</label>`).join("")}</div>
+        <div class="pbusca"><input type="search" data-pbusca="${i}" placeholder="Buscar una joya para agregarla (ej: cadena cubana)" autocomplete="off"><div class="pres" data-pres="${i}"></div></div>
+        <div class="pelegidas">${(p.productos || []).map(id => { const x = lista.find(y => y.id === id); return `<span class="pchip${!x || x.activo === false || x.stock === 0 ? " no" : ""}">${x?.imagenes?.[0] ? `<img src="${esc(x.imagenes[0])}" alt="">` : ""}${esc(x ? x.nombre : "Joya eliminada")}${x && x.stock === 0 ? " · agotada" : x && x.activo === false ? " · oculta" : ""}<button type="button" data-pquitar="${i}" data-id="${esc(id)}" aria-label="Quitar">×</button></span>`; }).join("")}</div>
+      </div>
       <div class="checks"><label><input type="checkbox" data-pi="${i}" data-pk="activo"${p.activo !== false ? " checked" : ""}> Activa</label><label><input type="checkbox" data-pi="${i}" data-pk="emergente"${p.emergente !== false ? " checked" : ""}> Mostrar al entrar a la página (ventana con X)</label></div>
       <div class="botones"><button type="button" data-pmover="${i}" data-d="-1"${i ? "" : " disabled"}>↑ Subir</button><button type="button" data-pmover="${i}" data-d="1"${i < promos.length - 1 ? "" : " disabled"}>↓ Bajar</button><button type="button" data-pborrar="${i}">Eliminar</button></div>
     </div></div>`; }).join("") || `<p class="vacio">No hay promociones. Pulsa “+ Nueva promoción”.</p>`;
 }
 $("#nuevaPromo").onclick = () => { promos.unshift({ etiqueta: "", titulo: "", texto: "", boton: "Ver promociones", enlace: "/promociones", desde: "", hasta: "", activo: true, emergente: true, imagen: "" }); pintarPromos(); };
-$("#promos").addEventListener("input", e => { const el = e.target.closest("[data-pk]"); if (!el) return; promos[+el.dataset.pi][el.dataset.pk] = el.type === "checkbox" ? el.checked : el.value; });
-$("#promos").addEventListener("change", e => { if (e.target.matches('[type="checkbox"],[type="date"]')) pintarPromos(); });
+$("#promos").addEventListener("input", e => {
+  const b = e.target.closest("[data-pbusca]");
+  if (b) {
+    const i = +b.dataset.pbusca, q = b.value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""), ya = new Set(promos[i].productos || []);
+    const res = q.length < 2 ? [] : lista.filter(x => dispo(x) && x.categoria !== "Exclusividad" && !ya.has(x.id) && (x.nombre + " " + x.categoria).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)).slice(0, 8);
+    $(`[data-pres="${i}"]`).innerHTML = res.map(x => `<button type="button" data-pagregar="${i}" data-id="${esc(x.id)}">${x.imagenes?.[0] ? `<img src="${esc(x.imagenes[0])}" alt="">` : ""}<span>${esc(x.nombre)}<small>${esc(x.categoria)}${x.precio ? " · $" + Number(x.precio).toLocaleString("es-CO") : " · sin precio"}</small></span></button>`).join("") || (q.length >= 2 ? `<p class="nota" style="padding:8px 10px">No hay joyas disponibles con ese nombre.</p>` : "");
+    return;
+  }
+  const el = e.target.closest("[data-pk]"); if (!el) return; promos[+el.dataset.pi][el.dataset.pk] = el.type === "checkbox" ? el.checked : el.value;
+});
+$("#promos").addEventListener("change", e => {
+  const c = e.target.closest("[data-pcat]");
+  if (c) { const p = promos[+c.dataset.pcat]; const s = new Set(p.categorias || []); c.checked ? s.add(c.value) : s.delete(c.value); p.categorias = [...s]; return pintarPromos(); }
+  if (e.target.matches('[type="checkbox"],[type="date"]')) pintarPromos();
+});
 $("#promos").addEventListener("click", e => {
+  const ag = e.target.closest("[data-pagregar]"), qu = e.target.closest("[data-pquitar]");
+  if (ag) { const p = promos[+ag.dataset.pagregar]; p.productos = [...(p.productos || []), ag.dataset.id]; pintarPromos(); const inp = $(`[data-pbusca="${ag.dataset.pagregar}"]`); inp?.focus(); return; }
+  if (qu) { const p = promos[+qu.dataset.pquitar]; p.productos = (p.productos || []).filter(x => x !== qu.dataset.id); return pintarPromos(); }
   const f = e.target.closest("[data-pfoto]"), m = e.target.closest("[data-pmover]"), d = e.target.closest("[data-pborrar]"), sf = e.target.closest("[data-psinfoto]");
   if (f) { subirPromo = +f.dataset.pfoto; $("#archivoPromo").click(); }
   if (m) { const i = +m.dataset.pmover, j = i + +m.dataset.d; [promos[i], promos[j]] = [promos[j], promos[i]]; pintarPromos(); }
