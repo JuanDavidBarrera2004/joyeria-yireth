@@ -345,7 +345,7 @@ label.campo{display:grid;gap:6px;font-size:12.5px;letter-spacing:.06em;color:var
 /* ---------- exclusividad ---------- */
 .oros-arte{background:var(--cafe);aspect-ratio:4/3;display:grid;place-items:center;align-content:center;gap:10px}
 .oros-txt{display:flex;gap:38px;color:var(--oro2);font:500 11px var(--f-txt);letter-spacing:.2em;text-transform:uppercase}
-.oros{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0}
+.oros{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:16px 0}
 .oros div{background:var(--crema);padding:20px}.oros b{display:block;font-family:var(--f-tit);font-size:22px;font-weight:500;margin-bottom:6px}.oros span{font-size:14px;color:var(--gris)}
 .tonos{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:10px;font-size:14px}.tonos span{display:flex;gap:8px;align-items:center}.tonos i{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
 @media(max-width:640px){.oros{grid-template-columns:1fr}.oros-txt{gap:18px}}

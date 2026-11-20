@@ -243,7 +243,7 @@ $$(".tab").forEach(t => t.onclick = () => {
 /* ---------- productos ---------- */
 $("#fCat").innerHTML += CATEGORIAS.map(c => `<option>${c}</option>`).join("");
 $("#pCat").innerHTML = CATEGORIAS.map(c => `<option>${c}</option>`).join("");
-$("#pMat").innerHTML = MATERIALES.map(c => `<option>${c}</option>`).join("");
+$("#pMat").innerHTML = `<option value="">Sin especificar</option>` + MATERIALES.map(c => `<option>${c}</option>`).join("");
 $("#mCat").innerHTML = $("#pCat").innerHTML;
 const pintarSub = (v = "") => { const l = SUBCATEGORIAS[$("#pCat").value] || []; $("#campoSub").hidden = !l.length; $("#notaExcl").hidden = $("#pCat").value !== "Exclusividad";
   $("#pSub").innerHTML = `<option value="">Sin subcategoría</option>` + l.map(s => `<option ${s === v ? "selected" : ""}>${s}</option>`).join(""); };
@@ -270,7 +270,7 @@ function pintarFotos() {
 $("#pFotos").onclick = e => { const b = e.target.closest("[data-q]"); if (b) { fotos.splice(+b.dataset.q, 1); pintarFotos(); } };
 function abrir(p) {
   edit = p || null; $("#dTit").textContent = p ? "Editar producto" : "Nuevo producto";
-  $("#pNombre").value = p?.nombre || ""; $("#pCat").value = p?.categoria || "Cadenas"; $("#pMat").value = p?.material || "Oro 18K";
+  $("#pNombre").value = p?.nombre || ""; $("#pCat").value = p?.categoria || "Cadenas"; $("#pMat").value = MATERIALES.includes(p?.material) ? p.material : "";
   $("#pPrecio").value = p?.precio || ""; $("#pAntes").value = p?.precioAntes || ""; $("#pStock").value = p?.stock ?? "";
   $("#pPeso").value = p?.peso || ""; $("#pMedida").value = p?.medida || ""; $("#pOrden").value = p?.orden || 100; $("#pDesc").value = p?.descripcion || "";
   $("#pActivo").checked = p ? p.activo !== false : true; $("#pNuevo").checked = p ? !!p.nuevo : true; $("#pDest").checked = !!p?.destacado; $("#pTop").checked = !!p?.top;
@@ -491,7 +491,7 @@ function pintarDiaps() {
       <div class="botones"><button type="button" data-foto="${i}" data-campo="imagen">${b.imagen ? "Cambiar foto" : "Subir foto"}</button><button type="button" data-foto="${i}" data-campo="imagenMovil">${b.imagenMovil ? "Cambiar" : "Agregar"} foto celular</button>${b.imagenMovil ? `<button type="button" data-sinmovil="${i}">Quitar foto celular</button>` : ""}</div></div>
     <div style="display:grid;gap:10px">
       <div class="g2">${campo(i, "linea1", "Título", "El detalle que eleva")}${campo(i, "linea2", "Segunda línea (dorada, cursiva)", "cualquier look")}</div>
-      ${campo(i, "texto", "Texto pequeño (opcional)", "Pulsos en Oro 18K", 160)}
+      ${campo(i, "texto", "Texto pequeño (opcional)", "Pulsos en oro italiano", 160)}
       <div class="g3">${campo(i, "boton", "Texto del botón", "Ver pulsos", 30)}${campo(i, "enlace", "Lleva a", "/tienda?cat=pulseras", 200)}
         <label class="campo">Texto a la<select data-i="${i}" data-k="alinear">${["izquierda", "centro", "derecha"].map(a => `<option${a === b.alinear ? " selected" : ""}>${a}</option>`).join("")}</select></label></div>
       <label style="display:flex;gap:8px;align-items:flex-start;font-size:14px;background:var(--crema);padding:10px 12px"><input type="checkbox" data-i="${i}" data-k="completa"${b.completa ? " checked" : ""}> <span><b style="font-weight:500">Foto ya diseñada</b> (con el texto incluido, por ejemplo hecha en Canva): se muestra completa, sin recortar y sin texto encima. Toda la foto lleva al enlace de abajo.</span></label>
