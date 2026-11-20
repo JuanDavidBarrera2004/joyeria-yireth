@@ -154,7 +154,9 @@ export function construirPulsera(cfg) {
   for (const d of [...izq].reverse()) items.push({ tipo: "balin", d });
   const rec = cfg.herraje && cfg.herraje.recorte;                 // { aspecto } cuando se pudo quitar el fondo
   const hAlto = rec ? 17 : 14, hAncho = rec ? Math.min(20, hAlto * rec.aspecto) : 14;
-  if (cfg.herraje) items.push({ tipo: "herraje", d: hAncho + 5 });
+  const punta = rec ? hAncho / 2 : 7;                              // media anchura hasta la punta del herraje
+  const AMARRE = 3.6;                                              // argolla + lazo de hilo + nudo en cada punta
+  if (cfg.herraje) items.push({ tipo: "herraje", d: 2 * (punta + AMARRE) + .4 });
   for (const d of der) items.push({ tipo: "balin", d });
   if (items.length) items.push({ tipo: "remate", d: 2.6 });
   const sep = .25, total = items.reduce((t, x) => t + x.d, 0) + sep * Math.max(0, items.length - 1);
@@ -167,7 +169,12 @@ export function construirPulsera(cfg) {
   banda(hilo, thB, thK);
   banda(hilo, -thK, -thB);
   tapa(hilo, thB, -1); tapa(hilo, -thB, 1); tapa(hilo, thK, 1); tapa(hilo, -thK, -1);
-  cordon(hilo, -thB - .02, thB + .02, .7);
+  // el cordón llega a cada punta del herraje y se amarra allí (no pasa por detrás de la joya)
+  const itH = items.find(x => x.tipo === "herraje");
+  if (itH) {
+    cordon(hilo, -thB - .02, (itH.s - punta - AMARRE + .3) / R, .7);
+    cordon(hilo, (itH.s + punta + AMARRE - .3) / R, thB + .02, .7);
+  } else cordon(hilo, -thB - .02, thB + .02, .7);
   cordon(hilo, thK - .03, Math.PI + .42, .75, .95);
   cordon(hilo, -thK + .03, -Math.PI - .42, .75, -.95);
   // nudo corredizo (atrás) y colas con nudito
@@ -221,14 +228,28 @@ export function construirPulsera(cfg) {
         q(foto, cf, f.r, false);
         q(silueta, cb, v3.mul(f.r, -1), false);
       }
-      for (const lado of [-1, 1]) toro(oro, v3.add(f.p, v3.mul(f.t, lado * (hAncho / 2 + 1.4))), f.t, f.r, 1.5, .45, 24, 10);
+      // amarre en cada punta: argolla dorada en la punta, lazo de hilo enlazado y nudo envolvente
+      for (const lado of [-1, 1]) {
+        const en = d => v3.add(v3.add(f.p, v3.mul(f.t, lado * (punta + d))), v3.mul(f.r, 1.2));
+        toro(oro, en(-.3), f.t, f.u, 1.3, .42, 28, 10);                 // argolla (plano de la joya)
+        toro(hilo, en(1.0), f.t, f.r, 1.3, .5, 28, 10);                // lazo de hilo que pasa por la argolla
+        const nudo = v3.add(f.p, v3.mul(f.t, lado * (punta + 2.9)));
+        for (let k = 0; k < 3; k++) toro(hilo, v3.add(nudo, v3.mul(f.t, lado * (k - 1) * .55)), f.u, f.r, .95, .42, 20, 10); // vueltas del nudo
+      }
     }
     else if (it.tipo === "herraje") {
       const c = v3.add(f.p, v3.mul(f.r, 1.6)), rr = 7;
       toro(oro, c, f.t, f.u, rr, .85, 60, 12);
       disco(foto, v3.add(c, v3.mul(f.r, .25)), f.t, f.u, rr - .2, 72, true);
       disco(oro, v3.sub(c, v3.mul(f.r, .25)), f.t, f.u, rr - .2, 72, false);
-      for (const lado of [-1, 1]) toro(oro, v3.add(f.p, v3.mul(f.t, lado * 8.6)), f.t, f.r, 1.5, .45, 24, 10);
+      // amarre en cada punta: argolla dorada en la punta, lazo de hilo enlazado y nudo envolvente
+      for (const lado of [-1, 1]) {
+        const en = d => v3.add(v3.add(f.p, v3.mul(f.t, lado * (punta + d))), v3.mul(f.r, 1.2));
+        toro(oro, en(-.3), f.t, f.u, 1.3, .42, 28, 10);                 // argolla (plano de la joya)
+        toro(hilo, en(1.0), f.t, f.r, 1.3, .5, 28, 10);                // lazo de hilo que pasa por la argolla
+        const nudo = v3.add(f.p, v3.mul(f.t, lado * (punta + 2.9)));
+        for (let k = 0; k < 3; k++) toro(hilo, v3.add(nudo, v3.mul(f.t, lado * (k - 1) * .55)), f.u, f.r, .95, .42, 20, 10); // vueltas del nudo
+      }
     }
   }
   return { oro, hilo, foto, silueta };
