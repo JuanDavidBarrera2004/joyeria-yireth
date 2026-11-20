@@ -71,7 +71,7 @@
   </div>
   <div class="sim-ctrl">
     <div class="sim-grupo"><b>1. Color del hilo <span id="tHilo"></span></b><div class="sim-colores" id="cHilo"></div></div>
-    <div class="sim-grupo"><b>2. Herraje <span id="tHerr"></span></b><p class="sim-sub">Son los herrajes y dijes disponibles en la tienda (primero los herrajes).</p><div class="sim-herrajes" id="cHerr"></div></div>
+    <div class="sim-grupo"><b>2. Herraje <span id="tHerr"></span></b><p class="sim-sub">Son los herrajes disponibles en la tienda.</p><div class="sim-herrajes" id="cHerr"></div></div>
     <div class="sim-grupo"><b>3. Balines</b>
       <div class="sim-opc" id="cTipo" style="margin-bottom:10px"></div>
       <div class="sim-opc" id="cPreset" style="margin-bottom:12px"></div>
@@ -112,8 +112,7 @@ const TAM = [4, 5, 6, 8, 10];
 const PRESETS = { "Clásica (4 balines)": [[8, 6], [8, 6]], "Escalonada": [[10, 8, 6], [10, 8, 6]], "Sencilla": [[6], [6]], "Sin balines": [[], []] };
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
 const est = { hilo: "Negro", oro: "Amarillo", liso: false, espejo: true, izq: [8, 6], der: [8, 6], herraje: null };
-const herrajes = (await productos()).filter(p => p.categoria === "Dijes y herrajes" && p.imagenes?.length)
-  .sort((a, b) => (b.sub === "Herrajes") - (a.sub === "Herrajes"));   // primero los herrajes
+const herrajes = (await productos()).filter(p => p.categoria === "Dijes y herrajes" && p.sub === "Herrajes" && p.imagenes?.length);
 
 let visor = null;
 try { visor = crearVisor($("#sim3d"), () => $("#simAyuda").classList.add("oculta")); } catch (e) { console.error(e); }
@@ -154,7 +153,7 @@ $("#cHerr").innerHTML = `<button data-herr=""><span class="sin">∅</span><span>
     await new Promise(ok => setTimeout(ok, 30));
   }
 })();
-if (!herrajes.length) $("#cHerr").insertAdjacentHTML("beforeend", `<p class="sim-sub">Pronto verás aquí los herrajes de la tienda.</p>`);
+if (!herrajes.length) $("#cHerr").insertAdjacentHTML("beforeend", `<p class="sim-sub">Pronto verás aquí más herrajes. Si quieres uno en especial, pregúntanos por WhatsApp.</p>`);
 
 document.querySelector(".sim-ctrl").addEventListener("click", e => {
   const k = e.target.closest("[data-k]"), h = e.target.closest("[data-herr]"), pr = e.target.closest("[data-preset]"), q = e.target.closest("[data-quitar]"), m = e.target.closest("[data-mas]");
