@@ -1,7 +1,7 @@
 // POST /api/pedido → crea el pedido y devuelve a dónde enviar al cliente (Wompi, Addi o WhatsApp)
 // GET  /api/pedido?id=...&t=...[&tx=...] → estado del pedido (para la página de gracias)
 import {
-  json, leerProductos, leerAjustes, costoEnvio, guardarPedido, leerPedido, marcarPagado,
+  json, productosConDescuento, leerAjustes, costoEnvio, guardarPedido, leerPedido, marcarPagado,
   limpiarTexto as txt, sha256, hmac, aleatorio, igual,
   wompiActivo, wompiApi, addiActivo, addiApi, addiAuth,
 } from "../../lib/comun.js";
@@ -30,7 +30,7 @@ export async function onRequestPost({ env, request }) {
     return json(400, { error: "Revisa tus datos: nombre, apellido, cédula, celular de 10 dígitos, correo, ciudad y dirección." });
 
   // ---- productos: los precios se toman del servidor, nunca del navegador ----
-  const lista = await leerProductos(env);
+  const lista = await productosConDescuento(env);   // con el descuento de las ofertas vigentes
   const items = [];
   for (const it of Array.isArray(d.items) ? d.items.slice(0, 30) : []) {
     const p = lista.find(x => x.id === it.id && x.activo !== false);
