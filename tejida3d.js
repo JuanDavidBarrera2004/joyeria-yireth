@@ -274,6 +274,7 @@ float ent(vec3 r){
   e += 0.25*smoothstep(0.0,0.5,r.y)*(0.5+0.5*sin(r.x*9.0));
   return e;
 }
+float tono(vec3 c){ float mx=max(c.r,max(c.g,c.b)), mn=min(c.r,min(c.g,c.b)), d=mx-mn; if(d<1e-4) return 0.0; float h; if(mx==c.r) h=mod((c.g-c.b)/d,6.0); else if(mx==c.g) h=(c.b-c.r)/d+2.0; else h=(c.r-c.g)/d+4.0; return h/6.0; }
 void main(){
   vec3 N=normalize(vN), V=normalize(uCam-vP);
   vec3 L1=normalize(vec3(0.4,0.9,0.6)), L2=normalize(vec3(-0.6,0.45,0.35));
@@ -292,13 +293,20 @@ void main(){
     vec4 tx=texture(uTex,vU);
     if(tx.a<0.45) discard;
     vec3 Rf=reflect(-V,N);
-    float mxc=max(tx.r,max(tx.g,tx.b)), mnc=min(tx.r,min(tx.g,tx.b)), sat=(mxc-mnc)/max(mxc,0.01), lum=dot(tx.rgb,vec3(0.3,0.55,0.15));
-    float piedra = 0.0;
-    float sp=pow(max(dot(Rf,L1),0.0),90.0)*2.2+pow(max(dot(Rf,L2),0.0),60.0)*0.9;
-    vec3 metal = (base*(0.06+0.22*max(dot(N,L1),0.0)) + base*ent(Rf)*0.95 + mix(base,vec3(1.0),0.45)*sp) * (uTexOk>0.5 ? 0.55+0.75*lum : 1.0);
-    float bri=fract(sin(dot(floor(vU*vec2(160.0,90.0)),vec2(12.9898,78.233)))*43758.5453);
-    vec3 circon = vec3(0.78,0.8,0.84)*(0.35+0.65*max(dot(N,L1),0.0)) + vec3(1.0)*pow(max(dot(Rf,L1),0.0),20.0)*2.0*bri + vec3(0.6)*step(0.93,bri);
-    c = mix(metal, circon, piedra);
+    float sp=pow(max(dot(Rf,L1),0.0),70.0)*1.6+pow(max(dot(Rf,L2),0.0),40.0)*0.6;
+    if(uTexOk>0.5){
+      // la pieza se ve tal cual la foto (piedras, nácar, esmalte); solo el oro toma el color escogido
+      vec3 foto=pow(tx.rgb,vec3(2.2));
+      float mx=max(tx.r,max(tx.g,tx.b)), sat=(mx-min(tx.r,min(tx.g,tx.b)))/max(mx,0.01), h=tono(tx.rgb);
+      float oro=smoothstep(0.16,0.30,sat)*smoothstep(0.025,0.055,h)*(1.0-smoothstep(0.16,0.20,h));
+      float Lf=dot(foto,vec3(0.2126,0.7152,0.0722));
+      vec3 dorado=base/max(dot(base,vec3(0.2126,0.7152,0.0722)),0.02)*Lf;
+      vec3 col=mix(foto,dorado,oro);
+      float dif=0.78+0.34*max(dot(N,L1),0.0);
+      c = col*dif*1.12 + mix(col,vec3(1.0),0.55)*sp*(0.3+0.7*oro);
+    } else {
+      c = base*(0.06+0.22*max(dot(N,L1),0.0)) + base*ent(Rf)*0.95 + mix(base,vec3(1.0),0.45)*sp;
+    }
   } else {
     vec4 tx = texture(uTex,vU);
     if(uModo==5 && tx.a<0.45) discard;
@@ -334,10 +342,31 @@ function recortarFondo(a) {
   for (let x = 0; x < w; x++) { meter(x, 0); meter(x, h - 1); }
   for (let y = 0; y < h; y++) { meter(0, y); meter(w - 1, y); }
   while (cola.length) { const p = cola.pop(), x = p % w, y = (p / w) | 0; if (x > 0) meter(x - 1, y); if (x < w - 1) meter(x + 1, y); if (y > 0) meter(x, y - 1); if (y < h - 1) meter(x, y + 1); }
+  // sombra suave de la foto alrededor de la joya: gris sin color pegado al fondo (no entra al nácar, que está rodeado de oro)
+  {
+    const sat = i => { const mx = Math.max(px[i], px[i + 1], px[i + 2]); return mx ? (mx - Math.min(px[i], px[i + 1], px[i + 2])) / mx : 0; };
+    const st = []; for (let p = 0; p < w * h; p++) if (es[p]) st.push(p);
+    while (st.length) { const p = st.pop(), x = p % w, y = (p / w) | 0;
+      for (const q of [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, y > 0 ? p - w : -1, y < h - 1 ? p + w : -1])
+        if (q >= 0 && !es[q] && dist(q * 4) < 95 && sat(q * 4) < .09) { es[q] = 2; st.push(q); } }
+  }
+  // huecos encerrados (el centro de las argollitas del herraje): si son del color exacto del fondo, también se quitan
+  {
+    const N = w * h, visto = new Uint8Array(N), minimo = Math.max(25, N * .0015);
+    for (let p0 = 0; p0 < N; p0++) {
+      if (es[p0] || visto[p0] || dist(p0 * 4) >= 16) continue;
+      const reg = [p0], st = [p0]; visto[p0] = 1;
+      while (st.length) { const p = st.pop(), x = p % w, y = (p / w) | 0;
+        for (const q of [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, y > 0 ? p - w : -1, y < h - 1 ? p + w : -1])
+          if (q >= 0 && !es[q] && !visto[q] && dist(q * 4) < 16) { visto[q] = 1; st.push(q); reg.push(q); } }
+      if (reg.length >= minimo) for (const p of reg) es[p] = 1;
+    }
+  }
   let x0 = w, y0 = h, x1 = 0, y1 = 0, quedan = 0;
   for (let p = 0; p < w * h; p++) {
     const i = p * 4;
-    if (es[p]) { const dd = dist(i); px[i + 3] = dd < T1 ? 0 : Math.round(255 * (dd - T1) / (T2 - T1)); }
+    if (es[p] === 2) px[i + 3] = 0;
+    else if (es[p]) { const dd = dist(i); px[i + 3] = dd < T1 ? 0 : Math.round(255 * (dd - T1) / (T2 - T1)); }
     if (px[i + 3] > 128) { quedan++; const x = p % w, y = (p / w) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
   }
   const frac = quedan / (w * h);
