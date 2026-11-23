@@ -190,7 +190,9 @@ a.add-rapido{display:block;text-align:center}
 .redes a:hover{border-color:var(--oro2);color:var(--oro2)}
 .redes svg{width:18px}
 .pagos-pie{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.pagos-pie span{border:1px solid #ffffff2a;padding:5px 10px;font-size:11.5px;letter-spacing:.06em}
+.pagos-pie .pago{height:34px;min-width:58px;background:#fff;border-radius:5px;display:flex;align-items:center;justify-content:center;padding:4px 8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.pagos-pie .pago img{display:block;max-height:100%;width:auto;max-width:72px;object-fit:contain}
+.pagos-pie .pago.lleno{padding:0;background:transparent}.pagos-pie .pago.lleno img{height:100%;max-width:none}
 .pie-fin{border-top:1px solid #ffffff1a;padding-top:22px;font-size:12.5px;color:#8c847a;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
 @media(max-width:860px){.pie-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:520px){.pie-grid{grid-template-columns:1fr}}
