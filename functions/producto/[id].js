@@ -1,5 +1,5 @@
 // /producto/ID → ficha del producto con título, descripción y datos para Google ya incluidos
-import { leerProductos } from "../../lib/comun.js";
+import { productosConDescuento } from "../../lib/comun.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -7,7 +7,7 @@ export async function onRequestGet({ env, params, request }) {
   const plantilla = await env.ASSETS.fetch(new URL("/producto.html", request.url));
   let html = await plantilla.text();
   const origen = new URL(request.url).origin;
-  const p = env.TIENDA ? (await leerProductos(env)).find(x => x.id === params.id && x.activo !== false) : null;
+  const p = env.TIENDA ? (await productosConDescuento(env)).find(x => x.id === params.id && x.activo !== false) : null;
   if (!p) {
     return new Response(html.replace("<!--SEO-->", '<meta name="robots" content="noindex">'), {
       status: 404, headers: { "Content-Type": "text/html; charset=utf-8" },
