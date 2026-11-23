@@ -43,6 +43,9 @@
   .foto .pri{position:absolute;left:2px;bottom:2px;font-size:10px;background:var(--tinta);color:#fff;padding:1px 5px}
   .subir{width:88px;height:88px;border:1px dashed var(--tenue);display:grid;place-items:center;text-align:center;font-size:12px;color:var(--gris);cursor:pointer;background:#fff}
   .papelera{display:grid;place-items:center;color:#a3392b!important;border-color:#e8c4bd!important}.papelera svg{width:17px;height:17px}.papelera:hover{background:#fbeeeb!important}
+  .pdcto{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.pdcto label{display:flex;gap:8px;align-items:center;font-weight:500}.pdcto input{width:80px;padding:9px 10px;border:1px solid var(--linea);font:inherit;font-size:16px;text-align:center}
+  .ptodas{display:flex;gap:8px;align-items:center}
+  .pcats[hidden],.pbusca[hidden],.pelegidas[hidden]{display:none}
   .pjoyas{background:var(--crema);padding:12px 14px;display:grid;gap:10px;font-size:14px}.pjoyas .nota{color:var(--gris);font-size:12.5px}
   .pcats{display:flex;flex-wrap:wrap;gap:6px 14px}.pcats label{display:flex;gap:6px;align-items:center;font-size:13px}
   .pbusca{position:relative}.pbusca input{width:100%;padding:10px 12px;border:1px solid var(--linea);background:#fff;font:inherit}
@@ -101,7 +104,7 @@
 <section class="panel contenedor" id="panel">
   <div class="top">
     <div style="display:flex;align-items:center"><a class="logo" href="/" target="_blank" title="Ver la tienda"><img src="/img/emblema-160.png" alt="" width="32" height="46" style="height:46px"><span class="txt"><b style="font-size:26px">YIRETH</b><small>JOYERÍA</small></span></a><span class="sello-admin">Panel Admin</span></div>
-    <div class="tabs"><button class="tab activo" data-tab="productos">Productos</button><button class="tab" data-tab="portada">Portada</button><button class="tab" data-tab="promos">Promociones</button><button class="tab" data-tab="videos">Videos</button><button class="tab" data-tab="pedidos">Pedidos</button><button class="tab" data-tab="encargos">Encargos <span class="globo" id="globoEnc" hidden></span></button><button class="tab" data-tab="ajustes">Ajustes</button></div>
+    <div class="tabs"><button class="tab activo" data-tab="productos">Productos</button><button class="tab" data-tab="portada">Portada</button><button class="tab" data-tab="promos">Ofertas</button><button class="tab" data-tab="videos">Videos</button><button class="tab" data-tab="pedidos">Pedidos</button><button class="tab" data-tab="encargos">Encargos <span class="globo" id="globoEnc" hidden></span></button><button class="tab" data-tab="ajustes">Ajustes</button></div>
     <button class="btn btn-borde" id="salir" style="padding:10px 18px">Salir</button>
   </div>
 
@@ -126,8 +129,8 @@
 
   <div data-vista="promos" hidden>
     <div class="barra">
-      <p style="color:var(--gris);font-size:14px;max-width:640px">Crea promociones como <b>Black Friday</b> o <b>Día de la Madre</b>. Las activas aparecen en la página <b>Promociones</b> y, si marcas “Mostrar al entrar”, salen en una ventana apenas alguien abre la página (con una X para cerrarla). Pon fechas y se muestran y se quitan solas. Los productos con <b>precio antes</b> aparecen ahí también como ofertas.</p>
-      <div style="display:flex;gap:8px"><button class="btn btn-borde" id="nuevaPromo" style="padding:12px 18px">+ Nueva promoción</button><button class="btn btn-negro" id="guardarPromos" style="padding:12px 18px">Guardar promociones</button></div>
+      <p style="color:var(--gris);font-size:14px;max-width:660px">Crea ofertas como <b>Black Friday</b>: pon el <b>% de descuento</b> y escoge a qué joyas se aplica (todas, categorías como Cadenas, o joyas una por una). El precio se rebaja solo en la página, en el carrito y en el pago, y vuelve a la normalidad cuando termina la fecha. Si marcas “Mostrar al entrar”, sale una ventana apenas alguien abre la página (con una X para cerrarla).</p>
+      <div style="display:flex;gap:8px"><button class="btn btn-borde" id="nuevaPromo" style="padding:12px 18px">+ Nueva oferta</button><button class="btn btn-negro" id="guardarPromos" style="padding:12px 18px">Guardar ofertas</button></div>
     </div>
     <p class="error" id="ePromos"></p>
     <div id="promos"></div>
@@ -540,7 +543,8 @@ let promos = [], subirPromo = null;
 const hoyCo = () => new Date(Date.now() - 5 * 3600e3).toISOString().slice(0, 10);
 const estadoPromo = p => p.activo === false ? ["Apagada", "#8a8a8a"] : p.hasta && p.hasta < hoyCo() ? ["Terminó", "#a3392b"] : p.desde && p.desde > hoyCo() ? ["Programada", "#9a6b12"] : ["Activa ahora", "#1d6b35"];
 const dispo = x => x.activo !== false && x.stock !== 0;
-const nDisp = p => { const n = lista.filter(x => dispo(x) && ((p.productos || []).includes(x.id) || (p.categorias || []).includes(x.categoria))).length; return n ? `<b style="color:#1d6b35">${n} ${n === 1 ? "joya disponible" : "joyas disponibles"}</b>` : "Escoge categorías completas o busca joyas una por una."; };
+const entra = (p, x) => x.categoria !== "Exclusividad" && (p.todas || (p.productos || []).includes(x.id) || (p.categorias || []).includes(x.categoria));
+const nDisp = p => { const ds = lista.filter(x => dispo(x) && entra(p, x)), n = ds.length, cp = ds.filter(x => x.precio).length; return n ? `<b style="color:#1d6b35">${n} ${n === 1 ? "joya disponible" : "joyas disponibles"}</b>${+p.descuento ? ` · ${cp} con precio quedan con ${+p.descuento}% menos` : ""}` : "Escoge “Todas las joyas”, categorías completas o busca joyas una por una."; };
 async function cargarPromos() { try { if (!lista.length) lista = await api("listar"); promos = await api("promociones"); pintarPromos(); } catch (err) { $("#ePromos").textContent = err.message; } }
 const campoP = (i, k, label, ph = "", max = 60, tipo = "text") => `<label class="campo">${label}<input type="${tipo}" data-pi="${i}" data-pk="${k}" value="${esc(promos[i][k] || "")}" placeholder="${ph}" maxlength="${max}"></label>`;
 function pintarPromos() {
@@ -551,19 +555,21 @@ function pintarPromos() {
     <div style="display:grid;gap:10px">
       <div class="g2">${campoP(i, "etiqueta", "Etiqueta pequeña", "Black Friday", 30)}${campoP(i, "titulo", "Título", "Hasta 30% en cadenas", 70)}</div>
       ${campoP(i, "texto", "Texto (opcional)", "Solo este fin de semana, en tienda y en línea.", 240)}
-      <div class="g2">${campoP(i, "boton", "Texto del botón", "Ver promociones", 30)}${campoP(i, "enlace", "El botón lleva a", "/promociones", 200)}</div>
+      <div class="g2">${campoP(i, "boton", "Texto del botón", "Ver ofertas", 30)}${campoP(i, "enlace", "El botón lleva a", "/ofertas", 200)}</div>
       <div class="g2">${campoP(i, "desde", "Empieza (opcional)", "", 10, "date")}${campoP(i, "hasta", "Termina (opcional)", "", 10, "date")}</div>
       <div class="pjoyas">
-        <b>Joyas de la promoción</b> <span class="nota">Solo se muestran las disponibles (visibles y no agotadas). ${nDisp(p)}</span>
-        <div class="pcats">${CATEGORIAS.filter(c => c !== "Exclusividad").map(c => `<label><input type="checkbox" data-pcat="${i}" value="${esc(c)}"${(p.categorias || []).includes(c) ? " checked" : ""}> ${esc(c === "Dijes y herrajes" ? "Dijes" : c)}</label>`).join("")}</div>
-        <div class="pbusca"><input type="search" data-pbusca="${i}" placeholder="Buscar una joya para agregarla (ej: cadena cubana)" autocomplete="off"><div class="pres" data-pres="${i}"></div></div>
-        <div class="pelegidas">${(p.productos || []).map(id => { const x = lista.find(y => y.id === id); return `<span class="pchip${!x || x.activo === false || x.stock === 0 ? " no" : ""}">${x?.imagenes?.[0] ? `<img src="${esc(x.imagenes[0])}" alt="">` : ""}${esc(x ? x.nombre : "Joya eliminada")}${x && x.stock === 0 ? " · agotada" : x && x.activo === false ? " · oculta" : ""}<button type="button" data-pquitar="${i}" data-id="${esc(id)}" aria-label="Quitar">×</button></span>`; }).join("")}</div>
+        <b>Descuento y joyas de la oferta</b> <span class="nota">${nDisp(p)}</span>
+        <div class="pdcto"><label>Descuento <input type="number" min="0" max="90" step="1" data-pi="${i}" data-pk="descuento" value="${+p.descuento || ""}" placeholder="0"> %</label><span class="nota">Déjalo en 0 si solo quieres anunciar algo, sin rebajar precios. Las joyas con “Consulta el precio” no se rebajan.</span></div>
+        <label class="ptodas"><input type="checkbox" data-pi="${i}" data-pk="todas"${p.todas ? " checked" : ""}> <b>Todas las joyas</b></label>
+        <div class="pcats"${p.todas ? " hidden" : ""}>${CATEGORIAS.filter(c => c !== "Exclusividad").map(c => `<label><input type="checkbox" data-pcat="${i}" value="${esc(c)}"${(p.categorias || []).includes(c) ? " checked" : ""}> ${esc(c === "Dijes y herrajes" ? "Dijes" : c)}</label>`).join("")}</div>
+        <div class="pbusca"${p.todas ? " hidden" : ""}><input type="search" data-pbusca="${i}" placeholder="Buscar una joya para agregarla (ej: cadena cubana)" autocomplete="off"><div class="pres" data-pres="${i}"></div></div>
+        <div class="pelegidas"${p.todas ? " hidden" : ""}>${(p.productos || []).map(id => { const x = lista.find(y => y.id === id); return `<span class="pchip${!x || x.activo === false || x.stock === 0 ? " no" : ""}">${x?.imagenes?.[0] ? `<img src="${esc(x.imagenes[0])}" alt="">` : ""}${esc(x ? x.nombre : "Joya eliminada")}${x && x.stock === 0 ? " · agotada" : x && x.activo === false ? " · oculta" : ""}<button type="button" data-pquitar="${i}" data-id="${esc(id)}" aria-label="Quitar">×</button></span>`; }).join("")}</div>
       </div>
       <div class="checks"><label><input type="checkbox" data-pi="${i}" data-pk="activo"${p.activo !== false ? " checked" : ""}> Activa</label><label><input type="checkbox" data-pi="${i}" data-pk="emergente"${p.emergente !== false ? " checked" : ""}> Mostrar al entrar a la página (ventana con X)</label></div>
       <div class="botones"><button type="button" data-pmover="${i}" data-d="-1"${i ? "" : " disabled"}>↑ Subir</button><button type="button" data-pmover="${i}" data-d="1"${i < promos.length - 1 ? "" : " disabled"}>↓ Bajar</button><button type="button" data-pborrar="${i}">Eliminar</button></div>
-    </div></div>`; }).join("") || `<p class="vacio">No hay promociones. Pulsa “+ Nueva promoción”.</p>`;
+    </div></div>`; }).join("") || `<p class="vacio">No hay ofertas. Pulsa “+ Nueva oferta”.</p>`;
 }
-$("#nuevaPromo").onclick = () => { promos.unshift({ etiqueta: "", titulo: "", texto: "", boton: "Ver promociones", enlace: "/promociones", desde: "", hasta: "", activo: true, emergente: true, imagen: "" }); pintarPromos(); };
+$("#nuevaPromo").onclick = () => { promos.unshift({ etiqueta: "", titulo: "", texto: "", boton: "Ver ofertas", enlace: "/ofertas", descuento: 0, todas: false, categorias: [], productos: [], desde: "", hasta: "", activo: true, emergente: true, imagen: "" }); pintarPromos(); };
 $("#promos").addEventListener("input", e => {
   const b = e.target.closest("[data-pbusca]");
   if (b) {
@@ -572,12 +578,12 @@ $("#promos").addEventListener("input", e => {
     $(`[data-pres="${i}"]`).innerHTML = res.map(x => `<button type="button" data-pagregar="${i}" data-id="${esc(x.id)}">${x.imagenes?.[0] ? `<img src="${esc(x.imagenes[0])}" alt="">` : ""}<span>${esc(x.nombre)}<small>${esc(x.categoria)}${x.precio ? " · $" + Number(x.precio).toLocaleString("es-CO") : " · sin precio"}</small></span></button>`).join("") || (q.length >= 2 ? `<p class="nota" style="padding:8px 10px">No hay joyas disponibles con ese nombre.</p>` : "");
     return;
   }
-  const el = e.target.closest("[data-pk]"); if (!el) return; promos[+el.dataset.pi][el.dataset.pk] = el.type === "checkbox" ? el.checked : el.value;
+  const el = e.target.closest("[data-pk]"); if (!el) return; promos[+el.dataset.pi][el.dataset.pk] = el.type === "checkbox" ? el.checked : el.type === "number" ? +el.value || 0 : el.value;
 });
 $("#promos").addEventListener("change", e => {
   const c = e.target.closest("[data-pcat]");
   if (c) { const p = promos[+c.dataset.pcat]; const s = new Set(p.categorias || []); c.checked ? s.add(c.value) : s.delete(c.value); p.categorias = [...s]; return pintarPromos(); }
-  if (e.target.matches('[type="checkbox"],[type="date"]')) pintarPromos();
+  if (e.target.matches('[type="checkbox"],[type="date"],[type="number"]')) pintarPromos();
 });
 $("#promos").addEventListener("click", e => {
   const ag = e.target.closest("[data-pagregar]"), qu = e.target.closest("[data-pquitar]");
@@ -586,7 +592,7 @@ $("#promos").addEventListener("click", e => {
   const f = e.target.closest("[data-pfoto]"), m = e.target.closest("[data-pmover]"), d = e.target.closest("[data-pborrar]"), sf = e.target.closest("[data-psinfoto]");
   if (f) { subirPromo = +f.dataset.pfoto; $("#archivoPromo").click(); }
   if (m) { const i = +m.dataset.pmover, j = i + +m.dataset.d; [promos[i], promos[j]] = [promos[j], promos[i]]; pintarPromos(); }
-  if (d && confirm("¿Eliminar esta promoción?")) { promos.splice(+d.dataset.pborrar, 1); pintarPromos(); }
+  if (d && confirm("¿Eliminar esta oferta?")) { promos.splice(+d.dataset.pborrar, 1); pintarPromos(); }
   if (sf) { promos[+sf.dataset.psinfoto].imagen = ""; pintarPromos(); }
 });
 $("#archivoPromo").onchange = async () => {
@@ -596,9 +602,10 @@ $("#archivoPromo").onchange = async () => {
   catch (err) { $("#ePromos").textContent = err.message; }
 };
 $("#guardarPromos").onclick = async () => {
-  if (promos.some(p => !String(p.titulo || "").trim())) return $("#ePromos").textContent = "Cada promoción necesita un título (o elimina las que estén vacías).";
+  if (promos.some(p => !String(p.titulo || "").trim())) return $("#ePromos").textContent = "Cada oferta necesita un título (o elimina las que estén vacías).";
+  if (promos.some(p => +p.descuento < 0 || +p.descuento > 90)) return $("#ePromos").textContent = "El descuento debe estar entre 0 y 90%.";
   if (promos.some(p => p.desde && p.hasta && p.hasta < p.desde)) return $("#ePromos").textContent = "Revisa las fechas: la fecha de fin es antes que la de inicio.";
-  try { const r = await api("guardar-promociones", { promociones: promos }); promos = r.promociones; pintarPromos(); $("#ePromos").style.color = "#1d6b35"; $("#ePromos").textContent = "Promociones guardadas ✓ Ya se ven en la página."; }
+  try { const r = await api("guardar-promociones", { promociones: promos }); promos = r.promociones; pintarPromos(); $("#ePromos").style.color = "#1d6b35"; $("#ePromos").textContent = "Ofertas guardadas ✓ Ya se ven en la página."; }
   catch (err) { $("#ePromos").style.color = ""; $("#ePromos").textContent = err.message; }
 };
 

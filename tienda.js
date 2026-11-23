@@ -1,5 +1,6 @@
 // Joyería Yireth — lógica común de la tienda
 import { EJEMPLOS, AJUSTES_BASE, CATEGORIAS, SUBCATEGORIAS, COLORES } from "/lib/datos.js";
+import { entraEnOferta } from "/lib/precios.js";
 export { SUBCATEGORIAS };
 export { COLORES };
 export const puntos = cs => cs?.length ? `<span class="puntos">${cs.map(c => `<i style="background:${COLORES[c]}" title="Oro ${c.toLowerCase()}"></i>`).join("")}</span>` : "";
@@ -35,15 +36,15 @@ export async function promociones() {
 }
 // Joyas disponibles (visibles y no agotadas) que entran en una promoción
 export const disponible = p => p.activo !== false && p.stock !== 0;
-export const joyasDePromo = (promo, lista) => lista.filter(p => disponible(p) && ((promo.productos || []).includes(p.id) || (promo.categorias || []).includes(p.categoria)));
+export const joyasDePromo = (promo, lista) => lista.filter(p => disponible(p) && entraEnOferta(promo, p));
 // Ventana de promoción al entrar: una vez por visita, se cierra con la X, Esc o tocando afuera
 async function ventanaPromo() {
-  if (/^\/(carrito|gracias|promociones|admin)/.test(location.pathname)) return;
+  if (/^\/(carrito|gracias|ofertas|promociones|admin)/.test(location.pathname)) return;
   const p = (await promociones()).find(x => x.emergente !== false);
   if (!p) return;
   const clave = "yj-promo-vista-" + p.id;
   try { if (sessionStorage.getItem(clave)) return; } catch {}
-  const joyas = (p.productos?.length || p.categorias?.length) ? joyasDePromo(p, await productos()).filter(j => j.imagenes?.length) : [];
+  const joyas = (p.todas || p.productos?.length || p.categorias?.length) ? joyasDePromo(p, await productos()).filter(j => j.imagenes?.length) : [];
   const mostrar = () => {
     const intro = document.getElementById("intro");
     if (intro && !intro.classList.contains("fuera")) return setTimeout(mostrar, 400);
@@ -53,10 +54,10 @@ async function ventanaPromo() {
     v.innerHTML = `<div class="promo-caja${p.imagen ? " con-foto" : ""}" role="dialog" aria-modal="true" aria-labelledby="promoTit">
       <button class="promo-x" type="button" aria-label="Cerrar">&times;</button>
       ${p.imagen ? `<a class="promo-foto" href="${esc(p.enlace)}"><img src="${esc(p.imagen)}" alt="${esc(p.titulo)}"></a>` : ""}
-      <div class="promo-txt">${p.etiqueta ? `<span class="promo-etq">${esc(p.etiqueta)}</span>` : ""}<h2 id="promoTit">${esc(p.titulo)}</h2>${p.texto ? `<p>${esc(p.texto)}</p>` : ""}
-        ${joyas.length ? `<div class="promo-minis">${joyas.slice(0, 4).map(j => `<a href="/producto/${esc(j.id)}" title="${esc(j.nombre)}"><img src="${esc(j.imagenes[0])}" alt="${esc(j.nombre)}" loading="lazy"></a>`).join("")}</div><small>${joyas.length} ${joyas.length === 1 ? "joya disponible" : "joyas disponibles"} en esta promoción</small>` : ""}
+      <div class="promo-txt">${p.etiqueta ? `<span class="promo-etq">${esc(p.etiqueta)}</span>` : ""}<h2 id="promoTit">${esc(p.titulo)}</h2>${p.descuento ? `<span class="promo-dcto">-${p.descuento}%</span><small>${p.todas ? "en todas las joyas" : "en las joyas seleccionadas"}</small>` : ""}${p.texto ? `<p>${esc(p.texto)}</p>` : ""}
+        ${joyas.length ? `<div class="promo-minis">${joyas.slice(0, 4).map(j => `<a href="/producto/${esc(j.id)}" title="${esc(j.nombre)}"><img src="${esc(j.imagenes[0])}" alt="${esc(j.nombre)}" loading="lazy"></a>`).join("")}</div><small>${joyas.length} ${joyas.length === 1 ? "joya disponible" : "joyas disponibles"} en esta oferta</small>` : ""}
         ${p.hasta ? `<small>Válido hasta el ${new Date(p.hasta + "T12:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "long" })}</small>` : ""}
-        <a class="btn btn-negro" href="${esc(p.enlace)}">${esc(p.boton || "Ver promociones")}</a></div></div>`;
+        <a class="btn btn-negro" href="${esc(p.enlace)}">${esc(p.boton || "Ver ofertas")}</a></div></div>`;
     const cerrar = () => { v.classList.remove("ver"); setTimeout(() => v.remove(), 300); document.removeEventListener("keydown", tecla); };
     const tecla = e => { if (e.key === "Escape") cerrar(); };
     v.addEventListener("click", e => { if (e.target === v || e.target.closest(".promo-x")) cerrar(); });
@@ -99,7 +100,7 @@ export const arte = cat => ARTE[ARTE_CAT[cat] || "dije"];
 /* ---------- tarjeta de producto ---------- */
 export function tarjeta(p) {
   const agotado = p.stock === 0;
-  const marcas = [agotado && ["agotado", "Agotado"], !agotado && p.precioAntes && ["oferta", "Oferta"], p.top && ["top", "★ Top"], p.destacado && ["tendencia", "Tendencia"], p.nuevo && ["", "Nuevo"]].filter(Boolean).slice(0, 2);
+  const marcas = [agotado && ["agotado", "Agotado"], !agotado && p.precioAntes && ["oferta", p.descuento ? `-${p.descuento}%` : "Oferta"], p.top && ["top", "★ Top"], p.destacado && ["tendencia", "Tendencia"], p.nuevo && ["", "Nuevo"]].filter(Boolean).slice(0, 2);
   const etq = marcas.length ? `<div class="etqs">${marcas.map(([c, t]) => `<span class="etq ${c}">${t}</span>`).join("")}</div>` : "";
   const fotos = p.imagenes?.length
     ? `<img class="pri" src="${esc(p.imagenes[0])}" alt="${esc(p.nombre)}" loading="lazy">${p.imagenes[1] ? `<img class="seg" src="${esc(p.imagenes[1])}" alt="" loading="lazy">` : ""}`
@@ -218,6 +219,13 @@ export const Carrito = {
   },
   quitar(id) { this.items = this.items.filter(i => i.id !== id); this.guardar(); },
   vaciar() { this.items = []; this.guardar(); },
+  // Pone al día los precios guardados (por si empezó o terminó una oferta)
+  actualizarPrecios(lista) {
+    let cambio = false;
+    for (const i of this.items) { const p = lista.find(x => x.id === i.id); if (p && p.precio && p.precio !== i.precio) { i.precio = p.precio; cambio = true; } }
+    if (cambio) this.guardar();
+    return cambio;
+  },
   subtotal() { return this.items.reduce((s, i) => s + i.precio * i.cantidad, 0); },
   cuenta() { return this.items.reduce((s, i) => s + i.cantidad, 0); },
   pintar() {
@@ -257,6 +265,7 @@ function montarCarrito() {
     if (m) Carrito.cambiar(m.dataset.mas, 1); if (n) Carrito.cambiar(n.dataset.menos, -1); if (q) Carrito.quitar(q.dataset.quitar);
   });
   Carrito.cargar(); Carrito.pintar();
+  if (Carrito.items.length) productos().then(l => Carrito.actualizarPrecios(l)).catch(() => {});
 }
 export function abrirCarrito(v) {
   if (location.pathname.startsWith("/carrito")) return;

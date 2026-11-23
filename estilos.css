@@ -464,3 +464,5 @@ label.campo{display:grid;gap:6px;font-size:12.5px;letter-spacing:.06em;color:var
 .promo-minis img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}.promo-minis a:hover img{transform:scale(1.06)}
 .promo-joyas{margin:-6px 0 34px}
 .promo-joyas>h3{font:500 22px "Cormorant Garamond",Georgia,serif;margin:0 0 14px}
+.promo-dcto{font:600 clamp(40px,8vw,58px)/1 "Cormorant Garamond",Georgia,serif;color:#a3392b;letter-spacing:.01em}
+.promo-tarjeta .promo-dcto{font-size:clamp(44px,6vw,64px)}
