@@ -479,3 +479,4 @@ label.campo{display:grid;gap:6px;font-size:12.5px;letter-spacing:.06em;color:var
 .tipos-marca button{padding:9px 14px;border:1px solid var(--linea,#e8e0d6);background:#fff;font:inherit;font-size:13px;cursor:pointer;transition:.2s}
 .tipos-marca button:hover{border-color:var(--oro,#b8902f)}
 .tipos-marca button.sel{background:var(--negro,#2a1311);color:#fff;border-color:var(--negro,#2a1311)}
+.campo-marca input::placeholder{color:#b5aca5;font-style:italic}

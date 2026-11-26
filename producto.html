@@ -129,9 +129,15 @@ if (!p) {
     if (!v) { $("#marcaAyuda").textContent = "Escribe el texto que quieres marcar."; $("#marcaAyuda").classList.add("err"); $("#marca").focus(); return null; }
     $("#marcaAyuda").classList.remove("err"); return `${$(".tipos-marca .sel").dataset.tipo}: ${v}`;
   };
+  // cada opción guarda su propio texto: al cambiar de "Fecha especial" a "Nombre" el cuadro queda limpio
+  const textos = {};
   $$(".tipos-marca button").forEach(b => b.onclick = () => {
+    const antes = $(".tipos-marca .sel"); if (antes === b) return $("#marca").focus();
+    textos[antes.dataset.tipo] = $("#marca").value;
     $$(".tipos-marca button").forEach(x => { x.classList.toggle("sel", x === b); x.setAttribute("aria-checked", x === b); });
-    $("#marca").placeholder = b.dataset.ej; $("#marca").dispatchEvent(new Event("input")); $("#marca").focus();
+    $("#marca").value = textos[b.dataset.tipo] || "";
+    $("#marca").placeholder = b.dataset.ej; $("#marcaAyuda").classList.remove("err");
+    $("#marca").dispatchEvent(new Event("input")); $("#marca").focus();
   });
   if (p.personalizable && !p.precio && $("#waPrecio")) $("#marca").addEventListener("input", () => {
     const v = $("#marca").value.trim(), t = $(".tipos-marca .sel")?.dataset.tipo || "";
