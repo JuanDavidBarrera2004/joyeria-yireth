@@ -244,7 +244,7 @@ export const Carrito = {
 };
 export const itemHTML = (i, fijo) => `<div class="item">
   <span class="mini" style="${i.imagen ? `background-image:url('${esc(i.imagen)}')` : ""}">${i.imagen ? "" : arte(i.categoria)}</span>
-  <div><b>${esc(i.nombre)}</b>${i.marcacion ? `<small class="marca-txt">✎ Marcar: “${esc(i.marcacion)}”</small>` : ""}<small>${pesos(i.precio)}</small>
+  <div><b>${esc(i.nombre)}</b>${i.marcacion ? `<small class="marca-txt">✎ ${esc(i.marcacion).split(" · ").join("<br>")}</small>` : ""}<small>${pesos(i.precio)}</small>
     ${fijo ? `<small> · Cant. ${i.cantidad}</small>` : `<div><span class="cant"><button data-menos="${esc(i.clave || i.id)}" aria-label="Quitar uno">−</button><span>${i.cantidad}</span><button data-mas="${esc(i.clave || i.id)}" aria-label="Agregar uno">+</button></span></div>`}
   </div>
   <div style="text-align:right">${pesos(i.precio * i.cantidad)}${fijo ? "" : `<br><button class="quitar" data-quitar="${esc(i.clave || i.id)}">Quitar</button>`}</div>

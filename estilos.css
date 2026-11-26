@@ -480,3 +480,8 @@ label.campo{display:grid;gap:6px;font-size:12.5px;letter-spacing:.06em;color:var
 .tipos-marca button:hover{border-color:var(--oro,#b8902f)}
 .tipos-marca button.sel{background:var(--negro,#2a1311);color:#fff;border-color:var(--negro,#2a1311)}
 .campo-marca input::placeholder{color:#b5aca5;font-style:italic}
+.marcas-g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.marca-campo{display:grid!important;gap:4px;text-transform:none!important;letter-spacing:0!important;font-weight:400!important}
+.marca-campo span{font-size:12.5px;color:var(--gris,#6b6460)}
+.marca-campo input{padding:11px 12px;font-size:15px}
+@media(max-width:520px){.marcas-g{grid-template-columns:1fr}}

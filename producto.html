@@ -103,9 +103,9 @@ if (!p) {
       ${p.precio >= 50000 && aj.pagos?.addi ? `<div class="caja-addi">${aj.pagos.addi && !VISTA_PREVIA ? `<addi-widget price="${p.precio}" ally-slug="${esc(aj.pagos.addi)}"></addi-widget>` : `<b>Paga a cuotas con Addi.</b> Elige Addi al finalizar tu compra. Sujeto a aprobación.`}</div>` : ""}
       <ul class="specs">${specs.map(([a, b]) => `<li><span>${a}</span><b style="font-weight:500">${esc(b)}</b></li>`).join("")}</ul>
       ${p.descripcion ? `<p class="desc">${esc(p.descripcion)}</p>` : ""}
-      ${p.personalizable && !agotado ? `<div class="campo-marca"><label>¿Qué quieres marcar?</label>
-        <div class="tipos-marca" role="radiogroup" aria-label="Tipo de marcación">${[["Fecha especial", "Ej: 14 de febrero de 2025"], ["Nombre", "Ej: Isabella"], ["Apodo", "Ej: Mi Reina"], ["Profesión", "Ej: Dra. Ana López"]].map(([t, ej], k) => `<button type="button" role="radio" aria-checked="${k ? "false" : "true"}" class="${k ? "" : "sel"}" data-tipo="${t}" data-ej="${ej}">${t}</button>`).join("")}</div>
-        <input id="marca" maxlength="30" placeholder="Ej: 14 de febrero de 2025" autocomplete="off" aria-label="Texto a marcar"><small id="marcaAyuda">Escríbelo tal cual quieres que quede marcado (máximo 30 caracteres).</small></div>` : ""}
+      ${p.personalizable && !agotado ? `<div class="campo-marca"><label>¿Qué quieres marcar?</label><small>Llena uno o varios. Escríbelo tal cual quieres que quede marcado.</small>
+        <div class="marcas-g">${[["Fecha especial", "Ej: 14 de febrero de 2025"], ["Nombre", "Ej: Isabella"], ["Apodo", "Ej: Mi Reina"], ["Profesión", "Ej: Dra. Ana López"]].map(([t, ej]) => `<label class="marca-campo"><span>${t}</span><input data-tipo="${t}" maxlength="30" placeholder="${ej}" autocomplete="off"></label>`).join("")}</div>
+        <small id="marcaAyuda">Máximo 30 caracteres por campo.</small></div>` : ""}
       ${agotado ? `<a class="btn btn-wa" style="width:100%" href="${waUrl(aj.whatsapp, `¡Hola! Me interesa "${p.nombre}", ¿lo vuelven a tener?`)}" target="_blank" rel="noopener">Preguntar disponibilidad</a>` : !p.precio ? `<a class="btn btn-wa" style="width:100%" id="waPrecio" href="${waUrl(aj.whatsapp, `¡Hola! Me interesa "${p.nombre}", ¿qué precio tiene? (${location.href})`)}" target="_blank" rel="noopener">Consultar precio por WhatsApp</a>` : `
       <div class="comprar">
         <span class="cant"><button id="menos" aria-label="Menos">−</button><span id="n">1</span><button id="mas" aria-label="Más">+</button></span>
@@ -125,24 +125,16 @@ if (!p) {
   // texto a marcar (bolígrafos, termos…): obligatorio antes de agregar al carrito
   const marca = () => {
     if (!p.personalizable) return "";
-    const v = ($("#marca")?.value || "").trim().split(" ").filter(Boolean).join(" ");
-    if (!v) { $("#marcaAyuda").textContent = "Escribe el texto que quieres marcar."; $("#marcaAyuda").classList.add("err"); $("#marca").focus(); return null; }
-    $("#marcaAyuda").classList.remove("err"); return `${$(".tipos-marca .sel").dataset.tipo}: ${v}`;
+    const partes = $$(".marca-campo input").map(x => [x.dataset.tipo, x.value.trim().split(" ").filter(Boolean).join(" ")]).filter(([, v]) => v);
+    if (!partes.length) { $("#marcaAyuda").textContent = "Escribe al menos un texto para marcar (fecha, nombre, apodo o profesión)."; $("#marcaAyuda").classList.add("err"); $(".marca-campo input").focus(); return null; }
+    $("#marcaAyuda").classList.remove("err"); $("#marcaAyuda").textContent = "Máximo 30 caracteres por campo.";
+    return partes.map(([t, v]) => `${t}: ${v}`).join(" · ");
   };
-  // cada opción guarda su propio texto: al cambiar de "Fecha especial" a "Nombre" el cuadro queda limpio
-  const textos = {};
-  $$(".tipos-marca button").forEach(b => b.onclick = () => {
-    const antes = $(".tipos-marca .sel"); if (antes === b) return $("#marca").focus();
-    textos[antes.dataset.tipo] = $("#marca").value;
-    $$(".tipos-marca button").forEach(x => { x.classList.toggle("sel", x === b); x.setAttribute("aria-checked", x === b); });
-    $("#marca").value = textos[b.dataset.tipo] || "";
-    $("#marca").placeholder = b.dataset.ej; $("#marcaAyuda").classList.remove("err");
-    $("#marca").dispatchEvent(new Event("input")); $("#marca").focus();
-  });
-  if (p.personalizable && !p.precio && $("#waPrecio")) $("#marca").addEventListener("input", () => {
-    const v = $("#marca").value.trim(), t = $(".tipos-marca .sel")?.dataset.tipo || "";
-    $("#waPrecio").href = waUrl(aj.whatsapp, `¡Hola! Me interesa "${p.nombre}"${v ? ` marcado con ${t.toLowerCase()}: "${v}"` : ""}, ¿qué precio tiene? (${location.href})`);
-  });
+  $$(".marca-campo input").forEach(x => x.addEventListener("input", () => { $("#marcaAyuda").classList.remove("err"); $("#marcaAyuda").textContent = "Máximo 30 caracteres por campo."; }));
+  if (p.personalizable && !p.precio && $("#waPrecio")) $$(".marca-campo input").forEach(x => x.addEventListener("input", () => {
+    const partes = $$(".marca-campo input").filter(y => y.value.trim()).map(y => `${y.dataset.tipo.toLowerCase()}: "${y.value.trim()}"`);
+    $("#waPrecio").href = waUrl(aj.whatsapp, `¡Hola! Me interesa "${p.nombre}"${partes.length ? ` marcado con ${partes.join(", ")}` : ""}, ¿qué precio tiene? (${location.href})`);
+  }));
   if (!agotado && p.precio) {
     $("#menos").onclick = () => { n = Math.max(1, n - 1); pn(); };
     $("#mas").onclick = () => { n = Math.min(p.stock || 20, n + 1); pn(); };
