@@ -51,7 +51,7 @@
     </div>
   </div>
   <nav class="nav" aria-label="Categorías"><ul>
-    <li><a href="/tienda">Toda la joyería</a></li><li><a href="/tienda?cat=cadenas">Cadenas</a></li><li><a href="/tienda?cat=pulseras">Pulseras</a></li><li><a href="/tienda?cat=aretes">Aretes</a></li><li><a href="/tienda?cat=anillos">Anillos</a></li><li><a href="/tienda?cat=dijes-y-herrajes">Dijes</a></li><li><a href="/tienda?cat=tejidas">Tejidas</a></li><li><a href="/tienda?cat=balines">Balines</a></li><li><a href="/tienda?cat=matrimonio">Matrimonio</a></li><li><a href="/tienda?cat=15-anos">15 años</a></li><li><a href="/tienda?cat=piercing">Piercing</a></li>
+    <li><a href="/tienda">Toda la joyería</a></li><li><a href="/tienda?cat=cadenas">Cadenas</a></li><li><a href="/tienda?cat=pulseras">Pulseras</a></li><li><a href="/tienda?cat=aretes">Aretes</a></li><li><a href="/tienda?cat=anillos">Anillos</a></li><li><a href="/tienda?cat=dijes-y-herrajes">Dijes</a></li><li><a href="/tienda?cat=tejidas">Tejidas</a></li><li><a href="/tienda?cat=balines">Balines</a></li><li><a href="/tienda?cat=matrimonio">Matrimonio</a></li><li><a href="/tienda?cat=15-anos">15 años</a></li><li><a href="/tienda?cat=piercing">Piercing</a></li><li><a href="/tienda?cat=personalizados">Personalizados</a></li>
     <li><a href="/ofertas" class="rojo">Ofertas</a></li>
     <li><a href="/servicios">Servicios</a></li>
         <li><a href="/fabricamos">Fabricamos</a></li>
@@ -84,7 +84,7 @@ const P = new URLSearchParams(location.search);
 const id = P.get("pedido"), t = P.get("t"), tx = P.get("id");
 const caja = $("#caja");
 const wa = id => `<a class="btn btn-wa" href="${waUrl(aj.whatsapp, `¡Hola! Tengo una pregunta sobre mi pedido ${id}`)}" target="_blank" rel="noopener">Escribir por WhatsApp</a>`;
-const lista = d => d.items?.length ? `<ul style="list-style:none;padding:0;margin:14px auto;max-width:420px;text-align:left;border-top:1px solid var(--linea)">${d.items.map(i => `<li style="padding:8px 0;border-bottom:1px solid var(--linea)">${i.cantidad} × ${esc(i.nombre)}</li>`).join("")}</ul>` : "";
+const lista = d => d.items?.length ? `<ul style="list-style:none;padding:0;margin:14px auto;max-width:420px;text-align:left;border-top:1px solid var(--linea)">${d.items.map(i => `<li style="padding:8px 0;border-bottom:1px solid var(--linea)">${i.cantidad} × ${esc(i.nombre)}${i.marcacion ? `<br><small style="color:#9a6b12">✎ Marcar: “${esc(i.marcacion)}”</small>` : ""}</li>`).join("")}</ul>` : "";
 if (P.get("wa")) {
   caja.innerHTML = `<span class="sup">Pedido ${esc(id)}</span><h1>¡Gracias por tu pedido!</h1><p>Te abrimos WhatsApp para confirmar el pago. Si no se abrió, escríbenos con tu número de pedido.</p><div class="hero-btns" style="justify-content:center">${wa(id)}<a class="btn btn-borde" href="/tienda">Seguir comprando</a></div>`;
 } else if (id && t) {

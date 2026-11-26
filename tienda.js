@@ -92,9 +92,10 @@ export const ARTE = {
   corona: `<svg viewBox="0 0 64 64" ${S}><path d="M12 44l4-22 10 10 6-14 6 14 10-10 4 22z"/><path d="M12 50h40"/><circle cx="32" cy="16" r="2"/></svg>`,
   piercing: `<svg viewBox="0 0 64 64" ${S}><path d="M44 22a14 14 0 1 1-24 0"/><circle cx="20" cy="22" r="3"/><circle cx="44" cy="22" r="3"/></svg>`,
   balines: `<svg viewBox="0 0 64 64" ${S}><path d="M8 40c8-10 16-14 24-14s16 4 24 14"/>${[10, 18, 26, 34, 42, 50].map((x, i) => `<circle cx="${x + 2}" cy="${[37, 31, 28, 28, 31, 37][i]}" r="3.2"/>`).join("")}</svg>`,
+  personalizado: `<svg viewBox="0 0 64 64" ${S}><rect x="12" y="20" width="16" height="34" rx="5"/><path d="M15 20v-4h10v4"/><path d="M17 36h6"/><path d="M40 52l4-30 4 30z"/><path d="M42 22l2-10 2 10"/><path d="M41 46h6"/></svg>`,
   set: `<svg viewBox="0 0 64 64" ${S}><path d="M10 10c3 14 10 22 18 24 8-2 15-10 18-24"/><path d="M28 34l-3 6h6z"/><circle cx="48" cy="44" r="8"/><circle cx="48" cy="44" r="5.5"/></svg>`,
 };
-const ARTE_CAT = { Cadenas: "cadena", Pulseras: "pulsera", Aretes: "arete", Anillos: "anillo", "Dijes y herrajes": "dije", Tejidas: "tejida", Balines: "balines", Matrimonio: "argollas", "15 años": "corona", Piercing: "piercing", Sets: "set", Otros: "dije" };
+const ARTE_CAT = { Cadenas: "cadena", Pulseras: "pulsera", Aretes: "arete", Anillos: "anillo", "Dijes y herrajes": "dije", Tejidas: "tejida", Balines: "balines", Matrimonio: "argollas", "15 años": "corona", Piercing: "piercing", Personalizados: "personalizado", Sets: "set", Otros: "dije" };
 export const arte = cat => ARTE[ARTE_CAT[cat] || "dije"];
 
 /* ---------- tarjeta de producto ---------- */
@@ -207,17 +208,22 @@ export const Carrito = {
   items: [],
   cargar() { try { this.items = JSON.parse(localStorage.getItem("yj-carrito") || "[]"); } catch { this.items = []; } },
   guardar() { try { localStorage.setItem("yj-carrito", JSON.stringify(this.items)); } catch {} this.pintar(); document.dispatchEvent(new Event("carrito")); },
-  agregar(p, n = 1) {
-    const it = this.items.find(i => i.id === p.id);
-    if (it) it.cantidad += n; else this.items.push({ id: p.id, nombre: p.nombre, precio: p.precio, categoria: p.categoria, imagen: p.imagenes?.[0] || "", cantidad: n });
-    this.guardar(); aviso(`${p.nombre} agregado al carrito`); abrirCarrito(true);
+  // cada texto de marcación distinto es una línea aparte del carrito
+  sumar(p, n = 1, marcacion = "") {
+    const clave = marcacion ? p.id + "|" + marcacion : p.id;
+    const it = this.items.find(i => (i.clave || i.id) === clave);
+    if (it) it.cantidad += n; else this.items.push({ id: p.id, clave, nombre: p.nombre, precio: p.precio, categoria: p.categoria, imagen: p.imagenes?.[0] || "", cantidad: n, ...(marcacion ? { marcacion } : {}) });
+    this.guardar();
+  },
+  agregar(p, n = 1, marcacion = "") {
+    this.sumar(p, n, marcacion); aviso(`${p.nombre} agregado al carrito`); abrirCarrito(true);
   },
   cambiar(id, d) {
-    const it = this.items.find(i => i.id === id); if (!it) return;
+    const it = this.items.find(i => (i.clave || i.id) === id); if (!it) return;
     it.cantidad += d; if (it.cantidad <= 0) this.items = this.items.filter(i => i !== it);
     this.guardar();
   },
-  quitar(id) { this.items = this.items.filter(i => i.id !== id); this.guardar(); },
+  quitar(id) { this.items = this.items.filter(i => (i.clave || i.id) !== id); this.guardar(); },
   vaciar() { this.items = []; this.guardar(); },
   // Pone al día los precios guardados (por si empezó o terminó una oferta)
   actualizarPrecios(lista) {
@@ -238,10 +244,10 @@ export const Carrito = {
 };
 export const itemHTML = (i, fijo) => `<div class="item">
   <span class="mini" style="${i.imagen ? `background-image:url('${esc(i.imagen)}')` : ""}">${i.imagen ? "" : arte(i.categoria)}</span>
-  <div><b>${esc(i.nombre)}</b><small>${pesos(i.precio)}</small>
-    ${fijo ? `<small> · Cant. ${i.cantidad}</small>` : `<div><span class="cant"><button data-menos="${esc(i.id)}" aria-label="Quitar uno">−</button><span>${i.cantidad}</span><button data-mas="${esc(i.id)}" aria-label="Agregar uno">+</button></span></div>`}
+  <div><b>${esc(i.nombre)}</b>${i.marcacion ? `<small class="marca-txt">✎ Marcar: “${esc(i.marcacion)}”</small>` : ""}<small>${pesos(i.precio)}</small>
+    ${fijo ? `<small> · Cant. ${i.cantidad}</small>` : `<div><span class="cant"><button data-menos="${esc(i.clave || i.id)}" aria-label="Quitar uno">−</button><span>${i.cantidad}</span><button data-mas="${esc(i.clave || i.id)}" aria-label="Agregar uno">+</button></span></div>`}
   </div>
-  <div style="text-align:right">${pesos(i.precio * i.cantidad)}${fijo ? "" : `<br><button class="quitar" data-quitar="${esc(i.id)}">Quitar</button>`}</div>
+  <div style="text-align:right">${pesos(i.precio * i.cantidad)}${fijo ? "" : `<br><button class="quitar" data-quitar="${esc(i.clave || i.id)}">Quitar</button>`}</div>
 </div>`;
 
 function montarCarrito() {

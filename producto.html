@@ -47,7 +47,7 @@
     </div>
   </div>
   <nav class="nav" aria-label="Categorías"><ul>
-    <li><a href="/tienda">Toda la joyería</a></li><li><a href="/tienda?cat=cadenas">Cadenas</a></li><li><a href="/tienda?cat=pulseras">Pulseras</a></li><li><a href="/tienda?cat=aretes">Aretes</a></li><li><a href="/tienda?cat=anillos">Anillos</a></li><li><a href="/tienda?cat=dijes-y-herrajes">Dijes</a></li><li><a href="/tienda?cat=tejidas">Tejidas</a></li><li><a href="/tienda?cat=balines">Balines</a></li><li><a href="/tienda?cat=matrimonio">Matrimonio</a></li><li><a href="/tienda?cat=15-anos">15 años</a></li><li><a href="/tienda?cat=piercing">Piercing</a></li>
+    <li><a href="/tienda">Toda la joyería</a></li><li><a href="/tienda?cat=cadenas">Cadenas</a></li><li><a href="/tienda?cat=pulseras">Pulseras</a></li><li><a href="/tienda?cat=aretes">Aretes</a></li><li><a href="/tienda?cat=anillos">Anillos</a></li><li><a href="/tienda?cat=dijes-y-herrajes">Dijes</a></li><li><a href="/tienda?cat=tejidas">Tejidas</a></li><li><a href="/tienda?cat=balines">Balines</a></li><li><a href="/tienda?cat=matrimonio">Matrimonio</a></li><li><a href="/tienda?cat=15-anos">15 años</a></li><li><a href="/tienda?cat=piercing">Piercing</a></li><li><a href="/tienda?cat=personalizados">Personalizados</a></li>
     <li><a href="/ofertas" class="rojo">Ofertas</a></li>
     <li><a href="/servicios">Servicios</a></li>
         <li><a href="/fabricamos">Fabricamos</a></li>
@@ -103,7 +103,8 @@ if (!p) {
       ${p.precio >= 50000 && aj.pagos?.addi ? `<div class="caja-addi">${aj.pagos.addi && !VISTA_PREVIA ? `<addi-widget price="${p.precio}" ally-slug="${esc(aj.pagos.addi)}"></addi-widget>` : `<b>Paga a cuotas con Addi.</b> Elige Addi al finalizar tu compra. Sujeto a aprobación.`}</div>` : ""}
       <ul class="specs">${specs.map(([a, b]) => `<li><span>${a}</span><b style="font-weight:500">${esc(b)}</b></li>`).join("")}</ul>
       ${p.descripcion ? `<p class="desc">${esc(p.descripcion)}</p>` : ""}
-      ${agotado ? `<a class="btn btn-wa" style="width:100%" href="${waUrl(aj.whatsapp, `¡Hola! Me interesa "${p.nombre}", ¿lo vuelven a tener?`)}" target="_blank" rel="noopener">Preguntar disponibilidad</a>` : !p.precio ? `<a class="btn btn-wa" style="width:100%" href="${waUrl(aj.whatsapp, `¡Hola! Me interesa "${p.nombre}", ¿qué precio tiene? (${location.href})`)}" target="_blank" rel="noopener">Consultar precio por WhatsApp</a>` : `
+      ${p.personalizable && !agotado ? `<div class="campo-marca"><label for="marca">Texto a marcar</label><input id="marca" maxlength="30" placeholder="Nombre, apodo, fecha especial o profesión" autocomplete="off"><small id="marcaAyuda">Escríbelo tal cual quieres que quede marcado (máximo 30 caracteres).</small></div>` : ""}
+      ${agotado ? `<a class="btn btn-wa" style="width:100%" href="${waUrl(aj.whatsapp, `¡Hola! Me interesa "${p.nombre}", ¿lo vuelven a tener?`)}" target="_blank" rel="noopener">Preguntar disponibilidad</a>` : !p.precio ? `<a class="btn btn-wa" style="width:100%" id="waPrecio" href="${waUrl(aj.whatsapp, `¡Hola! Me interesa "${p.nombre}", ¿qué precio tiene? (${location.href})`)}" target="_blank" rel="noopener">Consultar precio por WhatsApp</a>` : `
       <div class="comprar">
         <span class="cant"><button id="menos" aria-label="Menos">−</button><span id="n">1</span><button id="mas" aria-label="Más">+</button></span>
         <button class="btn btn-negro" id="agregar">Agregar al carrito</button>
@@ -119,11 +120,22 @@ if (!p) {
   if (aj.pagos?.addi && !VISTA_PREVIA && p.precio >= 50000) { const s = document.createElement("script"); s.src = "https://s3.amazonaws.com/widgets.addi.com/bundle.min.js"; document.body.append(s); }
   $$(".miniaturas button").forEach(b => b.onclick = () => { $$(".miniaturas button").forEach(x => x.classList.toggle("sel", x === b)); $("#gPri").innerHTML = `<img src="${esc(imgs[+b.dataset.i])}" alt="${esc(p.nombre)}">`; });
   let n = 1; const pn = () => $("#n").textContent = n;
+  // texto a marcar (bolígrafos, termos…): obligatorio antes de agregar al carrito
+  const marca = () => {
+    if (!p.personalizable) return "";
+    const v = ($("#marca")?.value || "").trim().split(" ").filter(Boolean).join(" ");
+    if (!v) { $("#marcaAyuda").textContent = "Escribe el texto que quieres marcar."; $("#marcaAyuda").classList.add("err"); $("#marca").focus(); return null; }
+    $("#marcaAyuda").classList.remove("err"); return v;
+  };
+  if (p.personalizable && !p.precio && $("#waPrecio")) $("#marca").addEventListener("input", () => {
+    const v = $("#marca").value.trim();
+    $("#waPrecio").href = waUrl(aj.whatsapp, `¡Hola! Me interesa "${p.nombre}"${v ? ` marcado con "${v}"` : ""}, ¿qué precio tiene? (${location.href})`);
+  });
   if (!agotado && p.precio) {
     $("#menos").onclick = () => { n = Math.max(1, n - 1); pn(); };
     $("#mas").onclick = () => { n = Math.min(p.stock || 20, n + 1); pn(); };
-    $("#agregar").onclick = () => Carrito.agregar(p, n);
-    $("#comprarYa").onclick = () => { Carrito.cargar(); const it = Carrito.items.find(i => i.id === p.id); if (!it) Carrito.items.push({ id: p.id, nombre: p.nombre, precio: p.precio, categoria: p.categoria, imagen: imgs[0] || "", cantidad: n }); Carrito.guardar(); location.href = "/carrito"; };
+    $("#agregar").onclick = () => { const m = marca(); if (m === null) return; Carrito.agregar(p, n, m); };
+    $("#comprarYa").onclick = () => { const m = marca(); if (m === null) return; Carrito.cargar(); const clave = m ? p.id + "|" + m : p.id; if (!Carrito.items.find(i => (i.clave || i.id) === clave)) Carrito.sumar(p, n, m); location.href = "/carrito"; };
   }
   const rel = l.filter(x => x.id !== p.id && x.categoria === p.categoria);
   pintarRejilla($("#relacionados"), (rel.length >= 2 ? rel : l.filter(x => x.id !== p.id)).slice(0, 4));

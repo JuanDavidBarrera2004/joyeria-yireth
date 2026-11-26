@@ -51,7 +51,7 @@
     </div>
   </div>
   <nav class="nav" aria-label="Categorías"><ul>
-    <li><a href="/tienda">Toda la joyería</a></li><li><a href="/tienda?cat=cadenas">Cadenas</a></li><li><a href="/tienda?cat=pulseras">Pulseras</a></li><li><a href="/tienda?cat=aretes">Aretes</a></li><li><a href="/tienda?cat=anillos">Anillos</a></li><li><a href="/tienda?cat=dijes-y-herrajes">Dijes</a></li><li><a href="/tienda?cat=tejidas">Tejidas</a></li><li><a href="/tienda?cat=balines">Balines</a></li><li><a href="/tienda?cat=matrimonio">Matrimonio</a></li><li><a href="/tienda?cat=15-anos">15 años</a></li><li><a href="/tienda?cat=piercing">Piercing</a></li>
+    <li><a href="/tienda">Toda la joyería</a></li><li><a href="/tienda?cat=cadenas">Cadenas</a></li><li><a href="/tienda?cat=pulseras">Pulseras</a></li><li><a href="/tienda?cat=aretes">Aretes</a></li><li><a href="/tienda?cat=anillos">Anillos</a></li><li><a href="/tienda?cat=dijes-y-herrajes">Dijes</a></li><li><a href="/tienda?cat=tejidas">Tejidas</a></li><li><a href="/tienda?cat=balines">Balines</a></li><li><a href="/tienda?cat=matrimonio">Matrimonio</a></li><li><a href="/tienda?cat=15-anos">15 años</a></li><li><a href="/tienda?cat=piercing">Piercing</a></li><li><a href="/tienda?cat=personalizados">Personalizados</a></li>
     <li><a href="/ofertas" class="rojo">Ofertas</a></li>
     <li><a href="/servicios">Servicios</a></li>
         <li><a href="/fabricamos">Fabricamos</a></li>
@@ -145,7 +145,7 @@ $("#formPago")?.addEventListener("submit", async e => {
   if (VISTA_PREVIA) return $("#error").textContent = "Vista previa: el pago funciona cuando la tienda está publicada.";
   $("#pagar").disabled = true; $("#pagar").textContent = "Procesando…";
   try {
-    const r = await fetch("/api/pedido", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cliente: f, metodo, items: Carrito.items.map(i => ({ id: i.id, cantidad: i.cantidad })) }) });
+    const r = await fetch("/api/pedido", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cliente: f, metodo, items: Carrito.items.map(i => ({ id: i.id, cantidad: i.cantidad, marcacion: i.marcacion || "" })) }) });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || "No se pudo crear el pedido");
     if (metodo === "whatsapp") { Carrito.vaciar(); window.open(d.url, "_blank", "noopener"); location.href = "/gracias?pedido=" + d.pedido + "&wa=1"; }

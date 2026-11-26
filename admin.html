@@ -225,6 +225,7 @@
       <label><input type="checkbox" id="pNuevo"> Nuevo</label>
       <label><input type="checkbox" id="pDest"> Tendencia</label>
       <label><input type="checkbox" id="pTop"> ★ Top ventas</label>
+      <label><input type="checkbox" id="pPers"> ✎ Se marca (el cliente escribe el nombre, fecha… a marcar)</label>
     </div>
     <p class="error" id="eProd"></p>
     <div class="pie-dlg"><button type="button" class="btn btn-borde" id="cancelar">Cancelar</button><button class="btn btn-negro" id="guardar">Guardar</button></div>
@@ -269,7 +270,7 @@ $("#pMat").innerHTML = `<option value="">Sin especificar</option>` + MATERIALES.
 $("#mCat").innerHTML = $("#pCat").innerHTML;
 const pintarSub = (v = "") => { const l = SUBCATEGORIAS[$("#pCat").value] || []; $("#campoSub").hidden = !l.length; $("#notaExcl").hidden = $("#pCat").value !== "Exclusividad";
   $("#pSub").innerHTML = `<option value="">Sin subcategoría</option>` + l.map(s => `<option ${s === v ? "selected" : ""}>${s}</option>`).join(""); };
-$("#pCat").addEventListener("change", () => pintarSub()); $("#mMat").innerHTML = $("#pMat").innerHTML;
+$("#pCat").addEventListener("change", () => { pintarSub(); if ($("#pCat").value === "Personalizados") $("#pPers").checked = true; }); $("#mMat").innerHTML = $("#pMat").innerHTML;
 $("#pColores").innerHTML = Object.entries(COLORES).map(([c, h]) => `<label><input type="checkbox" value="${c}"><i style="background:${h}"></i>Oro ${c.toLowerCase()}</label>`).join("");
 const mini = p => p.imagenes?.[0] ? `<span class="mini" style="background-image:url('${esc(p.imagenes[0])}')"></span>` : `<span class="mini">${arte(p.categoria)}</span>`;
 function pintar() {
@@ -295,7 +296,7 @@ function abrir(p) {
   $("#pNombre").value = p?.nombre || ""; $("#pCat").value = p?.categoria || "Cadenas"; $("#pMat").value = MATERIALES.includes(p?.material) ? p.material : "";
   $("#pPrecio").value = p?.precio || ""; $("#pAntes").value = p?.precioAntes || ""; $("#pStock").value = p?.stock ?? "";
   $("#pPeso").value = p?.peso || ""; $("#pMedida").value = p?.medida || ""; $("#pOrden").value = p?.orden || 100; $("#pDesc").value = p?.descripcion || "";
-  $("#pActivo").checked = p ? p.activo !== false : true; $("#pNuevo").checked = p ? !!p.nuevo : true; $("#pDest").checked = !!p?.destacado; $("#pTop").checked = !!p?.top;
+  $("#pActivo").checked = p ? p.activo !== false : true; $("#pNuevo").checked = p ? !!p.nuevo : true; $("#pDest").checked = !!p?.destacado; $("#pTop").checked = !!p?.top; $("#pPers").checked = p ? !!p.personalizable : false;
   $$("#pColores input").forEach(i => i.checked = (p?.colores || []).includes(i.value));
   pintarSub(p?.sub || "");
   fotos = [...(p?.imagenes || [])]; pintarFotos(); $("#eProd").textContent = ""; $("#dlg").showModal();
@@ -335,7 +336,7 @@ $("#fProd").onsubmit = async e => {
   const producto = { id: edit?.id || crearId($("#pNombre").value), nombre: $("#pNombre").value.trim(), categoria: $("#pCat").value, material: $("#pMat").value,
     precio: +$("#pPrecio").value, precioAntes: +$("#pAntes").value || 0, stock: $("#pStock").value === "" ? null : +$("#pStock").value,
     peso: $("#pPeso").value.trim(), medida: $("#pMedida").value.trim(), orden: +$("#pOrden").value || 100, descripcion: $("#pDesc").value.trim(),
-    imagenes: fotos, activo: $("#pActivo").checked, nuevo: $("#pNuevo").checked, destacado: $("#pDest").checked, top: $("#pTop").checked, colores: $$("#pColores input:checked").map(i => i.value), sub: $("#pSub").value };
+    imagenes: fotos, activo: $("#pActivo").checked, nuevo: $("#pNuevo").checked, destacado: $("#pDest").checked, top: $("#pTop").checked, personalizable: $("#pPers").checked, colores: $$("#pColores input:checked").map(i => i.value), sub: $("#pSub").value };
   if (!producto.nombre) return $("#eProd").textContent = "Escribe el nombre.";
   $("#guardar").disabled = true;
   try { const d = await api("guardar", { producto }); const i = lista.findIndex(p => p.id === d.producto.id); if (i >= 0) lista[i] = d.producto; else lista.push(d.producto); $("#dlg").close(); pintar(); }
@@ -491,7 +492,7 @@ $("#pedidos").onclick = async e => {
   if (b) { const box = $("#det-" + CSS.escape(b.dataset.ver)); if (box.classList.toggle("ver")) {
     box.innerHTML = "Cargando…"; try { const p = await api("pedido", { id: b.dataset.ver }); const c = p.cliente;
       box.innerHTML = `<b>${esc(c.nombre)} ${esc(c.apellido)}</b> · CC ${esc(c.cedula)}<br>📱 <a href="https://wa.me/57${esc(c.celular)}" target="_blank" style="text-decoration:underline">${esc(c.celular)}</a> · ${esc(c.correo)}<br>📍 ${esc(c.direccion)}, ${esc(c.ciudad)} (${esc(c.departamento)})${c.notas ? `<br>📝 ${esc(c.notas)}` : ""}
-      <table>${p.items.map(i => `<tr><td>${i.cantidad} × ${esc(i.nombre)}</td><td style="text-align:right">${pesos(i.precio * i.cantidad)}</td></tr>`).join("")}<tr><td>Envío</td><td style="text-align:right">${p.envio ? pesos(p.envio) : "Gratis"}</td></tr><tr><td><b>Total</b></td><td style="text-align:right"><b>${pesos(p.total)}</b></td></tr></table>
+      <table>${p.items.map(i => `<tr><td>${i.cantidad} × ${esc(i.nombre)}${i.marcacion ? `<br><small style="color:#9a6b12">✎ Marcar: “${esc(i.marcacion)}”</small>` : ""}</td><td style="text-align:right">${pesos(i.precio * i.cantidad)}</td></tr>`).join("")}<tr><td>Envío</td><td style="text-align:right">${p.envio ? pesos(p.envio) : "Gratis"}</td></tr><tr><td><b>Total</b></td><td style="text-align:right"><b>${pesos(p.total)}</b></td></tr></table>
       ${p.pago ? `<small style="color:var(--gris)">Pago: ${esc(p.pago.via)} ${esc(p.pago.transaccion || p.pago.solicitud || "")} ${esc(p.pago.medio || p.pago.estado || "")}</small><br>` : ""}
       <label class="campo" style="max-width:260px;margin-top:10px">Cambiar estado<select data-estado="${esc(p.id)}">${["pendiente","pagado","enviado","entregado","cancelado","rechazado"].map(s => `<option${s === p.estado ? " selected" : ""}>${s}</option>`).join("")}</select></label>`;
     } catch (err) { box.textContent = err.message; } } }
