@@ -39,7 +39,9 @@ export async function onRequestPost({ env, request }) {
     if (!p.precio) return json(400, { error: `${p.nombre} no tiene precio publicado. Consúltalo por WhatsApp.` });
     if (p.stock !== null && p.stock !== undefined && p.stock < cantidad)
       return json(400, { error: `${p.nombre}: solo quedan ${p.stock} disponibles.` });
-    items.push({ id: p.id, nombre: p.nombre, precio: p.precio, cantidad, imagen: p.imagenes?.[0] || "", categoria: p.categoria });
+    const marcacion = String(it.marcacion || "").replace(/[<>\n\r]/g, " ").replace(/\s+/g, " ").trim().slice(0, 40);
+    if (p.personalizable && !marcacion) return json(400, { error: `Escribe el texto que quieres marcar en "${p.nombre}".` });
+    items.push({ id: p.id, nombre: p.nombre, precio: p.precio, cantidad, imagen: p.imagenes?.[0] || "", categoria: p.categoria, ...(p.personalizable ? { marcacion } : {}) });
   }
   if (!items.length) return json(400, { error: "Tu carrito está vacío." });
 
@@ -59,7 +61,7 @@ export async function onRequestPost({ env, request }) {
   if (metodo === "whatsapp") {
     await guardarPedido(env, pedido);
     const msg = `¡Hola Joyería Yireth! ✨ Hice el pedido ${pedido.id}:\n\n` +
-      items.map(i => `• ${i.cantidad} x ${i.nombre} — ${pesos(i.precio * i.cantidad)}`).join("\n") +
+      items.map(i => `• ${i.cantidad} x ${i.nombre} — ${pesos(i.precio * i.cantidad)}${i.marcacion ? `\n   ✎ Marcar: "${i.marcacion}"` : ""}`).join("\n") +
       `\n\nEnvío: ${envio ? pesos(envio) : "Gratis"}\nTotal: ${pesos(total)}\n\nA nombre de ${cliente.nombre} ${cliente.apellido}, ${cliente.ciudad}.`;
     return json(200, { pedido: pedido.id, url: `https://wa.me/${aj.whatsapp}?text=${encodeURIComponent(msg)}` });
   }
@@ -152,5 +154,5 @@ export async function onRequestGet({ env, request }) {
       }
     } catch (e) { console.error("Wompi consulta:", e.message); }
   }
-  return json(200, { id: p.id, estado: p.estado, metodo: p.metodo, total: p.total, items: p.items.map(i => ({ nombre: i.nombre, cantidad: i.cantidad })) });
+  return json(200, { id: p.id, estado: p.estado, metodo: p.metodo, total: p.total, items: p.items.map(i => ({ nombre: i.nombre, cantidad: i.cantidad, marcacion: i.marcacion || "" })) });
 }
