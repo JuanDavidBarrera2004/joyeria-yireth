@@ -475,3 +475,7 @@ label.campo{display:grid;gap:6px;font-size:12.5px;letter-spacing:.06em;color:var
 .campo-marca input:focus{outline:none;border-color:var(--oro,#b8902f)}
 .campo-marca small{color:var(--gris,#6b6460);font-size:12.5px}.campo-marca .err{color:#a3392b}
 .tag-pers{display:inline-block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#9a6b12;margin-top:4px}
+.tipos-marca{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 4px}
+.tipos-marca button{padding:9px 14px;border:1px solid var(--linea,#e8e0d6);background:#fff;font:inherit;font-size:13px;cursor:pointer;transition:.2s}
+.tipos-marca button:hover{border-color:var(--oro,#b8902f)}
+.tipos-marca button.sel{background:var(--negro,#2a1311);color:#fff;border-color:var(--negro,#2a1311)}
